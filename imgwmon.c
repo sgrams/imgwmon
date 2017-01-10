@@ -7,10 +7,10 @@
 #include <yajl/yajl_parse.h>
 
 static int station_id = 253190220;
-void printInfo	(void);
-char *getData	(int station_id);
-static size_t	
-WriteMemoryCallback	(void *contents, size_t size, size_t nmemb, void *userp);
+void printInfo (void);
+char *getData (int station_id);
+static size_t
+WriteMemoryCallback (void *contents, size_t size, size_t nmemb, void *userp);
 
 struct MemoryStruct
 {
@@ -177,4 +177,3 @@ WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
 	mem->memory[mem->size] = 0;
 	return realsize;
 }
-
