@@ -2,60 +2,58 @@
 #include <stdio.h>
 #include <string.h>
 #include <getopt.h>
+#include <time.h>
 #include <curl/curl.h>
+#include <yajl/yajl_parse.h>
 
-void	printInfo	(void);
-char	*getData	(int station_id);
+static int station_id = 253190220;
+void printInfo	(void);
+char *getData	(int station_id);
+static size_t	
+WriteMemoryCallback	(void *contents, size_t size, size_t nmemb, void *userp);
+
 struct MemoryStruct
 {
 	char *memory;
 	size_t size;
 };
 
-static int	station_id = 253190220; /*  default ID number */
-
-/* funkcja zapisująca do char* dla curla  */
-static size_t
-WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
-{
-	size_t realsize = size * nmemb;
-	struct MemoryStruct *mem = (struct MemoryStruct *)userp;
-
-	mem->memory = realloc(mem->memory, mem->size + realsize + 1);
-	if (mem->memory == NULL)
-	{
-		printf("Not enough memory!\n");
-		return 0;
-	}
-	memcpy(&(mem->memory[mem->size]), contents, realsize);
-	mem->size += realsize;
-	mem->memory[mem->size] = 0;
-	return realsize;
-}
-
 int main (int argc, char **argv)
 {
 	static int verbose_flag=0;
 	static struct option long_options[] =
 	{
-		{"help",		no_argument,				0,	'h'},
-		{"verbose", no_argument,				0, 	'v'},
-		{"date",		required_argument,	0,	'd'},
-		{"type",		required_argument,	0,	't'},
-		{"id",			required_argument,	0,	'i'},
+		{"help",		no_argument,				0,	'h'	},
+		{"verbose", no_argument,				0, 	'v'	},
+		{"date",		required_argument,	0,	'd'	},
+		{"type",		required_argument,	0,	't'	},
+		{"id",			required_argument,	0,	'i'	},
+		{0,					0,									0,	0		},
 	};
-	
-	char *dane;
+	char *types_of_data[] =
+	{
+		"hourlyPrecipRecords",
+		"dailyPrecipRecords",
+		"tenMinutesPrecipRecords",
+		"temperatureAutoRecords",
+		"temperatureObsRecords",
+		"windDirectionTelRecords",
+		"windDirectionObsRecords",
+		"windVelocityTelRecords",
+		"windVelocityObsRecords",
+		"windMaxVelocityRecords",
+		NULL
+	};
+	char *data;
 	int option_index = 0;
-	int c;
-	dane = malloc(1);
+	int c, i = 0;
+
+	data = malloc(1);
+
 	if(argc!=1)
 	{
-		while (1)
+		while ((c = getopt_long (argc, argv, "hvd:t:i:", long_options, &option_index)) != -1)
 		{
-			c = getopt_long (argc, argv, "hvd:t:i:", long_options, &option_index);
-			if (c == -1)
-				break;
 			switch (c)
 			{
 				case 'v':
@@ -63,30 +61,44 @@ int main (int argc, char **argv)
 					break;
 				case 'h':
 					printInfo();
-					return EXIT_SUCCESS;
+					exit(0);
 				case 'd':
-					printf("executed %s -%c %s\n", argv[0], c, optarg);
+					if (optarg == NULL || strlen(optarg)!=17)
+						if (verbose_flag)
+							fprintf(stderr, "The specified date is invalid, using latest UTC full-hour.\n");
 					break;
 				case 't':
-					printf("executed %s -%c %s\n", argv[0], c, optarg);
+					for (i=0; *(types_of_data+i) != NULL; i++)
+						if (strcmp(optarg, *(types_of_data+i)) == 0)
+							break;
+					if (*(types_of_data+i) == NULL)
+					{
+						if (verbose_flag)
+							fprintf(stderr, "The specified type of data is invalid.\n");
+						return EXIT_FAILURE;
+					}
 					break;
 				case 'i':
-					if (atoi(optarg) == 0)
+					if (optarg == NULL || atoi(optarg)==0 || strlen(optarg) != 6)
 					{
 						if(verbose_flag)
-							fprintf(stderr, "Entered station id is invalid, using defaults.\n");
+							fprintf(stderr, "The specified ID is invalid, using defaults.\n");
 					}
 					else
 						station_id = atoi(optarg);
 					break;
 				case '?':
+					printInfo();
 					break;
 				default:
-					abort();
+					printInfo();
+					exit(1);
 			}
 		}
-		dane = getData(station_id);
-		free(dane);
+		data = getData(station_id);
+		if(verbose_flag)
+			printf("%s\n", data);
+		free(data);
 	}
 	else
 		printInfo();
@@ -136,3 +148,21 @@ void printInfo (void)
       "\t-d <date>\tSet the date of fetching data (yyyy-mm-dd hh:mm), if empty - fetching latest\n"
       "\t-t <type>\tSet the type of fetching data (temperature, precipitation, wind)\n");
 }
+static size_t
+WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+	size_t realsize = size * nmemb;
+	struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+
+	mem->memory = realloc(mem->memory, mem->size + realsize + 1);
+	if (mem->memory == NULL)
+	{
+		printf("Not enough memory!\n");
+		return 0;
+	}
+	memcpy(&(mem->memory[mem->size]), contents, realsize);
+	mem->size += realsize;
+	mem->memory[mem->size] = 0;
+	return realsize;
+}
+
