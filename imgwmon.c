@@ -20,15 +20,15 @@ struct MemoryStruct
 
 int main (int argc, char **argv)
 {
-	static int verbose_flag=0;
+	static int verbose_flag = 0;
 	static struct option long_options[] =
 	{
-		{"help",		no_argument,				0,	'h'	},
-		{"verbose", no_argument,				0, 	'v'	},
-		{"date",		required_argument,	0,	'd'	},
-		{"type",		required_argument,	0,	't'	},
-		{"id",			required_argument,	0,	'i'	},
-		{0,					0,									0,	0		},
+		{"help",	no_argument,	0,	'h'	},
+		{"verbose",	no_argument,	0, 	'v'	},
+		{"date",	required_argument,	0,	'd'	},
+		{"type",	required_argument,	0,	't'	},
+		{"id",	required_argument,	0,	'i'	},
+		{0,	0,	0,	0	},
 	};
 	char *types_of_data[] =
 	{
@@ -50,7 +50,7 @@ int main (int argc, char **argv)
 
 	data = malloc(1);
 
-	if(argc!=1)
+	if(argc>1)
 	{
 		while ((c = getopt_long (argc, argv, "hvd:t:i:", long_options, &option_index)) != -1)
 		{
@@ -68,6 +68,7 @@ int main (int argc, char **argv)
 							fprintf(stderr, "The specified date is invalid, using latest UTC full-hour.\n");
 					break;
 				case 't':
+					strcat(optarg, "Records");
 					for (i=0; *(types_of_data+i) != NULL; i++)
 						if (strcmp(optarg, *(types_of_data+i)) == 0)
 							break;
@@ -88,21 +89,19 @@ int main (int argc, char **argv)
 						station_id = atoi(optarg);
 					break;
 				case '?':
-					printInfo();
-					break;
+					return EXIT_FAILURE;
 				default:
-					printInfo();
-					exit(1);
+					return EXIT_SUCCESS;
 			}
 		}
 		data = getData(station_id);
 		if(verbose_flag)
 			printf("%s\n", data);
-		free(data);
 	}
 	else
 		printInfo();
 
+	free(data);
 	return EXIT_SUCCESS;
 }
 
@@ -141,12 +140,25 @@ char *getData (int station_id)
 void printInfo (void)
 {
   fprintf(stderr,
-      "imgwmon, version 2017/01/08 (C) 2016-2017 Stanislaw J. Grams <sjg@fmdx.pl>\n"
+      "imgwmon, version 2017/01/dupa (C) 2016-2017 Stanislaw J. Grams <sjg@fmdx.pl>\n"
       "Usage: imgwmon <options>\n"
       "\t-h\t\tPrint usage information\n"
-      "\t-i <id>\t\tSet the station id number (default=253190220)\n"
-      "\t-d <date>\tSet the date of fetching data (yyyy-mm-dd hh:mm), if empty - fetching latest\n"
-      "\t-t <type>\tSet the type of fetching data (temperature, precipitation, wind)\n");
+      "\t-i <id>\t\tSet the station id number (default=\"253190220\")\n"
+      "\t-d <date>\tSet the date of fetching data (date format=\"YYYY-MM-DD HH:MM\", if empty - fetching latest\n"
+      "\t-t <type>\tSet the type of fetching data (default=\"temperatureAuto\")\n\n"
+			"\tList of available data types:\n"
+			"\thourlyPrecip\t\t - record of a precipitation per hour\n"
+			"\tdailyPrecip\t\t - record of a precipitation per day (date format=\"YYYY-MM-DD\")\n"
+			"\ttenMinutesPrecip\t - record of a precipitation per 10 minutes (date format=\"HH:MM\")\n"
+			"\ttemperatureAuto\t\t - record of a temperature per hour, measured automatically\n"
+			"\ttemperatureObs\t\t - record of a temperature per hour, measured by an observer\n"
+			"\twindDirectionTel\t - record of a wind direction per 10 minutes, measured automatically\n"
+			"\twindDirectionObs\t - record of a wind direction per 1 hour, measured by an observer\n"
+			"\twindVelocityTel\t\t - record of an average wind speed per 10 minutes, measured automatically\n"
+			"\twindVelocityObs\t\t - record of an average wind speed per 1 hour, measured by an observer\n"
+			"\twindMaxVelocity\t\t - record of a maximum wind speed per 10 minutes, measured automatically\n"
+			"\tThe data is available up to the last three days.\n"
+			);
 }
 static size_t
 WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
