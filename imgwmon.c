@@ -7,11 +7,12 @@
 #include <errno.h>
 #include <yajl/yajl_tree.h>  
 
-#define STATION_ID = "253190220"
+#define METEO_STATION_ID 253190220
+#define HYDRO_STATION_ID 153190150
 
 void printInfo (void);
-char *getData (int target_id);
-void parseData (char *data, char *target_type_of_data, char *target_time);
+char *getData (size_t object_of_data, size_t target_id);
+void processData (char *data, size_t object_of_data, char *target_type_of_data, char *target_time);
 
 static size_t
 WriteMemoryCallback (void *contents, size_t size, size_t nmemb, void *userp);
@@ -38,6 +39,7 @@ int main (int argc, char **argv)
 
 	static char *types_of_data[] =
 	{
+		"currentPrecipRecords",
 		"hourlyPrecipRecords",
 		"dailyPrecipRecords",
 		"tenMinutesPrecipRecords",
@@ -48,21 +50,30 @@ int main (int argc, char **argv)
 		"windVelocityTelRecords",
 		"windVelocityObsRecords",
 		"windMaxVelocityRecords",
+		"waterStateRecords",
+		"waterStateObserverRecords",
+		"dischargeRecords",
+		"waterTemperatureAutoRecords",
+		"waterTemperatureObsRecords",
 		NULL
 	};
 
-	char *target_type_of_data = malloc(strlen("temperatureAutoRecords")+1);
+	char *target_type_of_data;
 	char *temp_target_type_of_data;
 	char *data	= malloc(1);
 	char target_time[21];
 	
-	int target_id = STATION_ID;
+	int target_id = METEO_STATION_ID;
 	int option_index = 0;
 	int c, i;
 	
 	time_t temp_time = time(NULL);
 	struct tm *real_time_struct;
 
+	size_t object_of_data = 0;
+
+	target_type_of_data = malloc(1);
+	
 	strcpy(target_type_of_data, "temperatureAutoRecords");
 	real_time_struct = gmtime(&temp_time);
 	strftime(target_time, 21, "%Y-%m-%dT%H:00:00Z", real_time_struct);
@@ -95,8 +106,8 @@ int main (int argc, char **argv)
 				{
 					/* HH:MM specified */
 					strftime(target_time, 12, "%Y-%m-%dT", real_time_struct);
-					strncat(target_time, optarg, 6);
-					strncat(target_time, ":00Z", 1);
+					strncat(target_time, optarg, 7);
+					strncat(target_time, ":00Z", 5);
 				}
 				else if (strlen(optarg)!=16)
 				{
@@ -113,9 +124,10 @@ int main (int argc, char **argv)
 				}
 				break;
 			case 't':
-				temp_target_type_of_data = malloc(strlen(optarg)+strlen("Records")+1);
+				temp_target_type_of_data = malloc(strlen(optarg) + strlen("Records") + 1);
+
 				strncpy(temp_target_type_of_data, optarg, strlen(optarg)+1);
-				strcat(temp_target_type_of_data, "Records");
+				strncat(temp_target_type_of_data, "Records", strlen("Records") + 1);
 
 				for (i=0; *(types_of_data+i) != NULL; i++)
 					if (strcmp(temp_target_type_of_data, *(types_of_data+i)) == 0)
@@ -128,20 +140,35 @@ int main (int argc, char **argv)
 				}
 				else
 				{
-					if (realloc(target_type_of_data, sizeof(temp_target_type_of_data)) == NULL)
-					{
-						if (verbose_flag)
-							fprintf(stderr, "Unable to realloc memory, realloc returned %s.\n", strerror(errno));
-
-					}
-					strcpy(target_type_of_data, temp_target_type_of_data);
-					if (strcmp(target_type_of_data, "dailyPrecipRecords") == 0 ||
-							strcmp(target_type_of_data, "windDirectionTelRecords") == 0 ||
+					strncpy(target_type_of_data, temp_target_type_of_data, strlen(temp_target_type_of_data)+1);
+					target_type_of_data = strndup(temp_target_type_of_data, strlen(temp_target_type_of_data)+1);
+					
+					if (strcmp(target_type_of_data, "windDirectionTelRecords") == 0 ||
 							strcmp(target_type_of_data, "windVelocityTelRecords") == 0 ||
 							strcmp(target_type_of_data, "windMaxVelocityRecords") == 0)
 					{
 						real_time_struct->tm_min = real_time_struct->tm_min - (real_time_struct->tm_min)%10;
 						strftime(target_time, 21, "%Y-%m-%dT%H:%M:00Z", real_time_struct);
+					}
+					else if (strcmp(target_type_of_data, "dailyPrecipRecords") == 0)
+					{
+						real_time_struct->tm_min = real_time_struct->tm_min - (real_time_struct->tm_min)%10;
+						strftime(target_time, 21, "%Y-%m-%dT06:00:00Z", real_time_struct);
+					}
+					else if (strcmp(target_type_of_data, "tenMinutesPrecipRecords") == 0)
+					{
+						real_time_struct->tm_min = real_time_struct->tm_min - (real_time_struct->tm_min)%10;
+						strftime(target_time, 21, "%Y-%m-%dT%H:%M:00Z", real_time_struct);
+					}
+
+					if (strcmp(target_type_of_data, "waterStateRecords") == 0 ||
+							strcmp(target_type_of_data, "waterStateObserverRecords") == 0 ||
+							strcmp(target_type_of_data, "dischargeRecords") == 0 ||
+							strcmp(target_type_of_data, "waterTemperatureAutoRecords") == 0 ||
+							strcmp(target_type_of_data, "waterTemperatureObsRecords") == 0)
+					{
+						target_id = HYDRO_STATION_ID;
+						object_of_data = 1; 
 					}
 				}
 				free(temp_target_type_of_data);
@@ -167,27 +194,37 @@ int main (int argc, char **argv)
 		fprintf(stderr, "target_time\t\t = %s\n", target_time);
 		fprintf(stderr, "target_id\t\t = %d\n", target_id);
 	}
-	data = getData(target_id);
-	parseData(data, target_type_of_data, target_time);
+	data = getData(object_of_data, target_id);
+	processData(data, object_of_data, target_type_of_data, target_time);
 
 	free(data);
 	free(target_type_of_data);
 	return EXIT_SUCCESS;
 }
 
-char *getData (int target_id)
+char *getData (size_t object_of_data, size_t target_id)
 { 
 	CURL *curl_handle;
 	CURLcode res;
+
 	char url[] = "http://monitor.pogodynka.pl/api/station/meteo/?id=";
-	char buffer[10];
+	char buffer[11];
 	struct MemoryStruct chunk;
 
 	chunk.memory = malloc(1);
 	chunk.size = 0;
+	
+	if (object_of_data)
+	{
+		url[0]='\0';
+		strncat(url, "http://monitor.pogodynka.pl/api/station/hydro/?id=", 50);
+	}
 
-	snprintf(buffer, sizeof(buffer), "%d", target_id);
-	strcat(url, buffer);
+	snprintf(buffer, 10, "%zd", target_id);
+	strncat(url, buffer, strlen(buffer)+1);
+
+	if(verbose_flag)
+		printf("target_url\t\t = %s\n", url);
 
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl_handle = curl_easy_init();
@@ -203,13 +240,17 @@ char *getData (int target_id)
 	}
 	curl_easy_cleanup(curl_handle);
 	curl_global_cleanup();
-	
+
 	return chunk.memory;
 }
-void parseData (char *data, char *target_type_of_data, char *target_time)
+
+void processData (char *data, size_t object_of_data, char *target_type_of_data, char *target_time)
 {
 	int i;
-	const char *path[] = {target_type_of_data, NULL};
+	const char *main_path[] =
+	{target_type_of_data, NULL};
+	const char *current_precip_path[] =
+	{"state", NULL};
 	char errbuf[1024];
 	int array_length;
 
@@ -227,24 +268,69 @@ void parseData (char *data, char *target_type_of_data, char *target_time)
 			fprintf(stderr, "Unable to parse data. Parser returned %s.\n", errbuf);
 		exit(EXIT_FAILURE);
 	}
-
-	arrays_target_type_of_data = yajl_tree_get(main_node, path, yajl_t_array);
-	if (arrays_target_type_of_data)
+	if(strcmp(target_type_of_data, "currentPrecipRecords") != 0)
 	{
-		array_length = arrays_target_type_of_data->u.array.len;
-		for (i=0; i<array_length; i++)
+		arrays_target_type_of_data = yajl_tree_get(main_node, main_path, yajl_t_array);
+		if (arrays_target_type_of_data)
 		{
-			keys_target_type_of_data = arrays_target_type_of_data->u.array.values[i];
-
-			values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
-			if(strcmp(target_time, values_target_type_of_data->u.object.keys) == 0)
+			array_length = arrays_target_type_of_data->u.array.len;
+			if (array_length)	
+			for (i=0; i<array_length; i++)
 			{
-				values_target_type_of_data = keys_target_type_of_data->u.object.values[1];
-				fprintf(stdout, "%.2lf\n", values_target_type_of_data->u.number.d);
+				keys_target_type_of_data = arrays_target_type_of_data->u.array.values[i];
+
+				if (strcmp(target_type_of_data, "waterStateRecords") == 0 ||
+						strcmp(target_type_of_data, "waterStateObserverRecords") == 0)
+					values_target_type_of_data = keys_target_type_of_data->u.object.values[1];
+				else
+					values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
+
+				if(strcmp(target_time, (char *)values_target_type_of_data->u.object.keys) == 0)
+				{
+					if (strcmp(target_type_of_data, "waterStateRecords") == 0 ||
+							strcmp(target_type_of_data, "waterStateObserverRecords") == 0)
+						values_target_type_of_data = keys_target_type_of_data->u.object.values[2];
+					else
+					values_target_type_of_data = keys_target_type_of_data->u.object.values[1];
+
+					fprintf(stdout, "%.1lf ", values_target_type_of_data->u.number.d);
+					if (strcmp(target_type_of_data, "hourlyPrecipRecords") == 0 ||
+							strcmp(target_type_of_data, "dailyPrecipRecords") == 0 ||
+							strcmp(target_type_of_data, "tenMinutesPrecipRecords") == 0)
+						fprintf(stdout, "mm\n");
+					else if (strcmp(target_type_of_data, "temperatureAutoRecords") == 0 ||
+						strcmp(target_type_of_data, "temperatureObsRecords") == 0 ||
+						strcmp(target_type_of_data, "waterTemperatureAutoRecords") == 0 ||
+						strcmp(target_type_of_data, "waterTemperatureObsRecords") == 0)
+						fprintf(stdout, "°C\n");
+					else if (strcmp(target_type_of_data, "windDirectionTelRecords") == 0 ||
+							strcmp(target_type_of_data, "windDirectionObsRecords") == 0)
+						fprintf(stdout, "°\n");
+					else if (strcmp(target_type_of_data, "windVelocityTelRecords") == 0 ||
+							strcmp(target_type_of_data, "windVelocityObsRecords") == 0 ||
+							strcmp(target_type_of_data, "windMaxVelocityRecords") == 0)
+						fprintf(stdout, "m/s\n");
+					else if (strcmp(target_type_of_data, "waterStateRecords") == 0 ||
+							strcmp(target_type_of_data, "waterStateObserverRecords") == 0)
+						fprintf(stdout, "cm\n");
+					else if (strcmp(target_type_of_data, "dischargeRecords") == 0)
+						fprintf(stdout, "m3/s\n");
+				}
 			}
 		}
 	}
-
+	else
+	{
+		keys_target_type_of_data = yajl_tree_get(main_node, current_precip_path, yajl_t_string);
+		if (keys_target_type_of_data)
+		{
+			if(strcmp("precip", (char *)keys_target_type_of_data->u.object.keys) == 0)
+				fprintf(stdout, "state: precipitation\n");
+			else
+				fprintf(stdout, "state: no precipitation\n");
+		}
+	}
+	
 	yajl_tree_free(main_node);
 }
 void printInfo (void)
@@ -254,13 +340,13 @@ void printInfo (void)
       "Usage: imgwmon <options>\n"
       "\t-h\t\tPrint usage information\n"
       "\t-i <id>\t\tSet the station id number (default=\"253190220\")\n"
-      "\t-d <date>\tSet the date of fetching data (date format=\"YYYY-MM-DD HH:MM\" UTC), if empty - fetching latest\n"
+      "\t-d <date>\tSet the date of fetching data (date format=\"YYYY-MM-DD HH:MM\" UTC),\n\t\t\tif empty - fetching latest\n"
       "\t-t <type>\tSet the type of fetching data (default=\"temperatureAuto\")\n\n"
-			"\tList of available data types:\n"
+			"\tList of available METEO data types:\n"
 			"\tcurrentPrecip\t\t - state of the precipitation at the moment\n"
 			"\thourlyPrecip\t\t - record of a precipitation per hour\n"
 			"\tdailyPrecip\t\t - record of a precipitation per day (date format=\"YYYY-MM-DD\")\n"
-			"\ttenMinutesPrecip\t - record of a precipitation per 10 minutes (date format=\"HH:MM\")\n"
+			"\ttenMinutesPrecip\t - record of a precipitation per 10 minutes (date format=\"HH:MM\"),\n\t\t\t\t data available up to the last hour\n"
 			"\ttemperatureAuto\t\t - record of a temperature per hour, measured automatically\n"
 			"\ttemperatureObs\t\t - record of a temperature per hour, measured by an observer\n"
 			"\twindDirectionTel\t - record of a wind direction per 10 minutes, measured automatically\n"
@@ -269,6 +355,13 @@ void printInfo (void)
 			"\twindVelocityObs\t\t - record of an average wind speed per 1 hour, measured by an observer\n"
 			"\twindMaxVelocity\t\t - record of a maximum wind speed per 10 minutes, measured automatically\n"
 			"\tThe data is available up to the last three days.\n"
+			"\n"
+			"\tList of available HYDRO data types:\n"
+			"\twaterState\t\t - record of water states per hour, measured automatically\n"
+			"\twaterStateObserver\t - record of water states (frequency depends on the station), measured by an observer\n"
+			"\tdischarge\t\t - record of water discharge per hour, measured automatically\n"
+			"\twaterTemperatureAuto\t - record of a water temperature per hour, measured automatically\n"
+			"\twaterTemperatureObs\t - record of a water temperature (frequency depends on the station), measured by an observer\n"
 			);
 }
 
