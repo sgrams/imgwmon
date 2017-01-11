@@ -61,101 +61,102 @@ int main (int argc, char **argv)
 	
 	real_time_struct = gmtime(&temp_time);
 	strftime(target_time, 21, "%Y-%m-%dT%H:00:00Z", real_time_struct);
-	if (argc > 1)
+	while ((c = getopt_long (argc, argv, "hvd:t:i:", long_options, &option_index)) != -1)
 	{
-		while ((c = getopt_long (argc, argv, "hvd:t:i:", long_options, &option_index)) != -1)
+		switch (c)
 		{
-			switch (c)
-			{
-				case 'v':
-					verbose_flag = 1;
-					break;
-				case 'h':
-					printInfo();
-					return EXIT_SUCCESS;
-				case 'd':
-					if ((strcmp(target_type_of_data, "dailyPrecipRecords") == 0 && strlen(optarg) != 10) ||
-						(strcmp(target_type_of_data, "tenMinutesPrecipRecords") == 0 && strlen(optarg) != 5))
-					{
-						if (verbose_flag)
-							fprintf(stderr, "The specified date is invalid, using latest possible time (%s).\n", target_time);
-						printf("target_time=%s\n", target_time);
-					}
-					else if (strcmp(target_type_of_data, "dailyPrecipRecords") == 0 && strlen(optarg) == 10)
-					{
-						/* YYYY-MM-DD specified */
-						strcpy(target_time, optarg);
-						strncat(target_time, "T06:00:00Z", 7);
-					}
-					else if (strcmp(target_type_of_data, "tenMinutesPrecipRecords") == 0 && strlen(optarg) == 5)
-					{
-						/* HH:MM specified */
-						strftime(target_time, 12, "%Y-%m-%dT", real_time_struct);
-						strncat(target_time, optarg, 6);
-						strncat(target_time, ":00Z", 1);
-					}
-					else if (strlen(optarg)!=16)
-					{
-						/* Invalid date */
-						if (verbose_flag)
-							fprintf(stderr, "The specified date is invalid, using latest possible time (%s).\n", target_time);
-					}
-					else
-					{
-						/* Correct date of common types, YYYY-MM-DD HH:MM (minutes=00)*/
-						strcpy(target_time, optarg);
-						strcat(target_time, ":00Z");
-						target_time[10] = 'T';
-					}
-					break;
-				case 't':
-					temp_target_type_of_data = malloc(strlen(optarg)+strlen("Records")+1);
-					strncpy(temp_target_type_of_data, optarg, strlen(optarg)+1);
-					strcat(temp_target_type_of_data, "Records");
+			case 'v':
+				verbose_flag = 1;
+				break;
+			case 'h':
+				printInfo();
+				return EXIT_SUCCESS;
+			case 'd':
+				if ((strcmp(target_type_of_data, "dailyPrecipRecords") == 0 && strlen(optarg) != 10) ||
+					(strcmp(target_type_of_data, "tenMinutesPrecipRecords") == 0 && strlen(optarg) != 5))
+				{
+					if (verbose_flag)
+						fprintf(stderr, "The specified date is invalid, using latest possible time (%s).\n", target_time);
+					printf("target_time=%s\n", target_time);
+				}
+				else if (strcmp(target_type_of_data, "dailyPrecipRecords") == 0 && strlen(optarg) == 10)
+				{
+					/* YYYY-MM-DD specified */
+					strcpy(target_time, optarg);
+					strncat(target_time, "T06:00:00Z", 7);
+				}
+				else if (strcmp(target_type_of_data, "tenMinutesPrecipRecords") == 0 && strlen(optarg) == 5)
+				{
+					/* HH:MM specified */
+					strftime(target_time, 12, "%Y-%m-%dT", real_time_struct);
+					strncat(target_time, optarg, 6);
+					strncat(target_time, ":00Z", 1);
+				}
+				else if (strlen(optarg)!=16)
+				{
+					/* Invalid date */
+					if (verbose_flag)
+						fprintf(stderr, "The specified date is invalid, using latest possible time (%s).\n", target_time);
+				}
+				else
+				{
+					/* YYYY-MM-DD HH:MM specified*/
+					strcpy(target_time, optarg);
+					strcat(target_time, ":00Z");
+					target_time[10] = 'T';
+				}
+				break;
+			case 't':
+				temp_target_type_of_data = malloc(strlen(optarg)+strlen("Records")+1);
+				strncpy(temp_target_type_of_data, optarg, strlen(optarg)+1);
+				strcat(temp_target_type_of_data, "Records");
 
-					for (i=0; *(types_of_data+i) != NULL; i++)
-						if (strcmp(temp_target_type_of_data, *(types_of_data+i)) == 0)
-							break;
-					
-					if (*(types_of_data+i) == NULL)
+				for (i=0; *(types_of_data+i) != NULL; i++)
+					if (strcmp(temp_target_type_of_data, *(types_of_data+i)) == 0)
+						break;
+				
+				if (*(types_of_data+i) == NULL)
+				{
+					if (verbose_flag)
+						fprintf(stderr, "The specified type of data is invalid, using defaults.\n");
+				}
+				else
+				{
+					target_type_of_data = malloc(strlen(temp_target_type_of_data) + 1);
+					strcpy(target_type_of_data, temp_target_type_of_data+'\0');
+					if (strcmp(target_type_of_data, "dailyPrecipRecords") == 0 ||
+							strcmp(target_type_of_data, "windDirectionTelRecords") == 0 ||
+							strcmp(target_type_of_data, "windVelocityTelRecords") == 0 ||
+							strcmp(target_type_of_data, "windMaxVelocityRecords") == 0)
 					{
-						if (verbose_flag)
-							fprintf(stderr, "The specified type of data is invalid, using defaults.\n");
+						real_time_struct->tm_min = real_time_struct->tm_min - (real_time_struct->tm_min)%10;
+						strftime(target_time, 21, "%Y-%m-%dT%H:%M:00Z", real_time_struct);
 					}
-					else
-					{
-						target_type_of_data = malloc(strlen(temp_target_type_of_data) + 1);
-						strcpy(target_type_of_data, temp_target_type_of_data+'\0');
-						if (strcmp(target_type_of_data, "dailyPrecipRecords") == 0 ||
-								strcmp(target_type_of_data, "windDirectionTelRecords") == 0 ||
-								strcmp(target_type_of_data, "windVelocityTelRecords") == 0 ||
-								strcmp(target_type_of_data, "windMaxVelocityRecords") == 0)
-						{
-							real_time_struct->tm_min = real_time_struct->tm_min - (real_time_struct->tm_min)%10;
-							strftime(target_time, 21, "%Y-%m-%dT%H:%M:00Z", real_time_struct);
-						}
-					}
-					break;
-				case 'i':
-					if (optarg == NULL || atoi(optarg)==0 || strlen(optarg) != 6)
-					{
-						if (verbose_flag)
-							fprintf(stderr, "The specified ID is invalid, using defaults.\n");
-					}
-					else
-						target_id = atoi(optarg);
-					break;
-				case '?':
-					return EXIT_FAILURE;
-				default:
-					return EXIT_SUCCESS;
-			}
+				}
+				break;
+			case 'i':
+				if (optarg == NULL || atoi(optarg)==0 || strlen(optarg) != 6)
+				{
+					if (verbose_flag)
+						fprintf(stderr, "The specified ID is invalid, using defaults.\n");
+				}
+				else
+					target_id = atoi(optarg);
+				break;
+			case '?':
+				return EXIT_FAILURE;
+			default:
+				return EXIT_SUCCESS;
 		}
-		data = getData(target_id);
-		printf("target_time=%s\n", target_time);
 	}
-	else
-		printInfo();
+	if(verbose_flag)
+	{
+		fprintf(stderr, "target_type_of_data\t = %s\n", target_type_of_data);
+		fprintf(stderr, "target_time\t\t = %s\n", target_time);
+		fprintf(stderr, "target_id\t\t = %d\n", target_id);
+	}
+	data = getData(target_id);
+	
 	free(data);
 	return EXIT_SUCCESS;
 }
@@ -199,7 +200,7 @@ void printInfo (void)
       "Usage: imgwmon <options>\n"
       "\t-h\t\tPrint usage information\n"
       "\t-i <id>\t\tSet the station id number (default=\"253190220\")\n"
-      "\t-d <date>\tSet the date of fetching data (date format=\"YYYY-MM-DD HH:MM\", if empty - fetching latest\n"
+      "\t-d <date>\tSet the date of fetching data (date format=\"YYYY-MM-DD HH:MM\" UTC), if empty - fetching latest\n"
       "\t-t <type>\tSet the type of fetching data (default=\"temperatureAuto\")\n\n"
 			"\tList of available data types:\n"
 			"\tcurrentPrecip\t\t - state of the precipitation at the moment\n"
