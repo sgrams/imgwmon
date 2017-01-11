@@ -5,10 +5,13 @@
 #include <time.h>
 #include <curl/curl.h>
 #include <errno.h>
-#include "jsmn.h"
+#include <yajl/yajl_tree.h>  
+
+#define STATION_ID = "253190220"
 
 void printInfo (void);
 char *getData (int target_id);
+void parseData (char *data, char *target_type_of_data, char *target_time);
 
 static size_t
 WriteMemoryCallback (void *contents, size_t size, size_t nmemb, void *userp);
@@ -18,6 +21,8 @@ struct MemoryStruct
 	char *memory;
 	size_t size;
 };
+
+static int verbose_flag = 0;
 
 int main (int argc, char **argv)
 {
@@ -46,21 +51,22 @@ int main (int argc, char **argv)
 		NULL
 	};
 
-	char *target_type_of_data = "temperatureAutoRecords";
-	char target_time[21];
+	char *target_type_of_data = malloc(strlen("temperatureAutoRecords")+1);
 	char *temp_target_type_of_data;
 	char *data	= malloc(1);
+	char target_time[21];
 	
-	int target_id			= 253190220;
-	int verbose_flag	= 0;
-	int option_index	= 0;
+	int target_id = STATION_ID;
+	int option_index = 0;
 	int c, i;
 	
 	time_t temp_time = time(NULL);
 	struct tm *real_time_struct;
-	
+
+	strcpy(target_type_of_data, "temperatureAutoRecords");
 	real_time_struct = gmtime(&temp_time);
 	strftime(target_time, 21, "%Y-%m-%dT%H:00:00Z", real_time_struct);
+
 	while ((c = getopt_long (argc, argv, "hvd:t:i:", long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -102,7 +108,7 @@ int main (int argc, char **argv)
 				{
 					/* YYYY-MM-DD HH:MM specified*/
 					strcpy(target_time, optarg);
-					strcat(target_time, ":00Z");
+					strncat(target_time, ":00Z", 5);
 					target_time[10] = 'T';
 				}
 				break;
@@ -122,8 +128,13 @@ int main (int argc, char **argv)
 				}
 				else
 				{
-					target_type_of_data = malloc(strlen(temp_target_type_of_data) + 1);
-					strcpy(target_type_of_data, temp_target_type_of_data+'\0');
+					if (realloc(target_type_of_data, sizeof(temp_target_type_of_data)) == NULL)
+					{
+						if (verbose_flag)
+							fprintf(stderr, "Unable to realloc memory, realloc returned %s.\n", strerror(errno));
+
+					}
+					strcpy(target_type_of_data, temp_target_type_of_data);
 					if (strcmp(target_type_of_data, "dailyPrecipRecords") == 0 ||
 							strcmp(target_type_of_data, "windDirectionTelRecords") == 0 ||
 							strcmp(target_type_of_data, "windVelocityTelRecords") == 0 ||
@@ -133,9 +144,10 @@ int main (int argc, char **argv)
 						strftime(target_time, 21, "%Y-%m-%dT%H:%M:00Z", real_time_struct);
 					}
 				}
+				free(temp_target_type_of_data);
 				break;
 			case 'i':
-				if (optarg == NULL || atoi(optarg)==0 || strlen(optarg) != 6)
+				if (optarg == NULL || atoi(optarg)==0 || strlen(optarg) != 9)
 				{
 					if (verbose_flag)
 						fprintf(stderr, "The specified ID is invalid, using defaults.\n");
@@ -146,7 +158,7 @@ int main (int argc, char **argv)
 			case '?':
 				return EXIT_FAILURE;
 			default:
-				return EXIT_SUCCESS;
+				break;
 		}
 	}
 	if(verbose_flag)
@@ -156,8 +168,10 @@ int main (int argc, char **argv)
 		fprintf(stderr, "target_id\t\t = %d\n", target_id);
 	}
 	data = getData(target_id);
-	
+	parseData(data, target_type_of_data, target_time);
+
 	free(data);
+	free(target_type_of_data);
 	return EXIT_SUCCESS;
 }
 
@@ -192,7 +206,47 @@ char *getData (int target_id)
 	
 	return chunk.memory;
 }
+void parseData (char *data, char *target_type_of_data, char *target_time)
+{
+	int i;
+	const char *path[] = {target_type_of_data, NULL};
+	char errbuf[1024];
+	int array_length;
 
+	yajl_val main_node;
+	yajl_val arrays_target_type_of_data;
+	yajl_val keys_target_type_of_data;
+	yajl_val values_target_type_of_data;
+
+	errbuf[0] = 0;
+
+	main_node = yajl_tree_parse((const char *) data, errbuf, sizeof(errbuf));
+	if(!main_node)
+	{
+		if(verbose_flag)
+			fprintf(stderr, "Unable to parse data. Parser returned %s.\n", errbuf);
+		exit(EXIT_FAILURE);
+	}
+
+	arrays_target_type_of_data = yajl_tree_get(main_node, path, yajl_t_array);
+	if (arrays_target_type_of_data)
+	{
+		array_length = arrays_target_type_of_data->u.array.len;
+		for (i=0; i<array_length; i++)
+		{
+			keys_target_type_of_data = arrays_target_type_of_data->u.array.values[i];
+
+			values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
+			if(strcmp(target_time, values_target_type_of_data->u.object.keys) == 0)
+			{
+				values_target_type_of_data = keys_target_type_of_data->u.object.values[1];
+				fprintf(stdout, "%.2lf\n", values_target_type_of_data->u.number.d);
+			}
+		}
+	}
+
+	yajl_tree_free(main_node);
+}
 void printInfo (void)
 {
   fprintf(stderr,
