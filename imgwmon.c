@@ -353,7 +353,7 @@ void processData (char *data, size_t object_of_data, char *target_type_of_data, 
 void printInfo (void)
 {
   fprintf(stderr,
-      "imgwmon, version 2017/01/dupa (C) 2016-2017 Stanislaw J. Grams <sjg@fmdx.pl>\n"
+      "imgwmon 0.1-git (C) 2016-2017 Stanislaw J. Grams <sjg@fmdx.pl>\n"
       "Usage: imgwmon <options>\n"
       "\t-h\t\tPrint usage information\n"
       "\t-i <id>\t\tSet the station id number (default=\"253190220\")\n"
