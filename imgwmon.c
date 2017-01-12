@@ -40,6 +40,7 @@ int main (int argc, char **argv)
 	static char *types_of_data[] =
 	{
 		"currentPrecipRecords",
+		"currentWaterStateRecords",
 		"hourlyPrecipRecords",
 		"dailyPrecipRecords",
 		"tenMinutesPrecipRecords",
@@ -162,6 +163,7 @@ int main (int argc, char **argv)
 					}
 
 					if (strcmp(target_type_of_data, "waterStateRecords") == 0 ||
+							strcmp(target_type_of_data, "currentWaterStateRecords") == 0 ||
 							strcmp(target_type_of_data, "waterStateObserverRecords") == 0 ||
 							strcmp(target_type_of_data, "dischargeRecords") == 0 ||
 							strcmp(target_type_of_data, "waterTemperatureAutoRecords") == 0 ||
@@ -251,6 +253,8 @@ void processData (char *data, size_t object_of_data, char *target_type_of_data, 
 	{target_type_of_data, NULL};
 	const char *current_precip_path[] =
 	{"state", NULL};
+	const char *current_water_path[] =
+	{"trend", NULL};
 	char errbuf[1024];
 	int array_length;
 
@@ -268,7 +272,7 @@ void processData (char *data, size_t object_of_data, char *target_type_of_data, 
 			fprintf(stderr, "Unable to parse data. Parser returned %s.\n", errbuf);
 		exit(EXIT_FAILURE);
 	}
-	if(strcmp(target_type_of_data, "currentPrecipRecords") != 0)
+	if(strcmp(target_type_of_data, "currentPrecipRecords") != 0 || strcmp(target_type_of_data, "currentWaterStateRecords") !=0)
 	{
 		arrays_target_type_of_data = yajl_tree_get(main_node, main_path, yajl_t_array);
 		if (arrays_target_type_of_data)
@@ -321,6 +325,8 @@ void processData (char *data, size_t object_of_data, char *target_type_of_data, 
 	}
 	else
 	{
+		if(strcmp(target_type_of_data, "currentPrecipRecords") == 0)
+		{
 		keys_target_type_of_data = yajl_tree_get(main_node, current_precip_path, yajl_t_string);
 		if (keys_target_type_of_data)
 		{
@@ -328,6 +334,17 @@ void processData (char *data, size_t object_of_data, char *target_type_of_data, 
 				fprintf(stdout, "state: precipitation\n");
 			else
 				fprintf(stdout, "state: no precipitation\n");
+		}
+		}
+		else
+		{
+			keys_target_type_of_data = yajl_tree_get(main_node, current_precip_path, yajl_t_string);
+			if (keys_target_type_of_data)
+				fprintf(stdout, "state: %s\n", (char *)keys_target_type_of_data->u.object.keys);
+			keys_target_type_of_data = NULL;
+			keys_target_type_of_data = yajl_tree_get(main_node, current_water_path, yajl_t_string);
+			if (keys_target_type_of_data)
+				fprintf(stdout, "trend: %s\n", (char *)keys_target_type_of_data->u.object.keys);
 		}
 	}
 	
@@ -354,14 +371,18 @@ void printInfo (void)
 			"\twindVelocityTel\t\t - record of an average wind speed per 10 minutes, measured automatically\n"
 			"\twindVelocityObs\t\t - record of an average wind speed per 1 hour, measured by an observer\n"
 			"\twindMaxVelocity\t\t - record of a maximum wind speed per 10 minutes, measured automatically\n"
-			"\tThe data is available up to the last three days.\n"
 			"\n"
 			"\tList of available HYDRO data types:\n"
+			"\tcurrentWaterState\t - state of water and trend at the moment\n"
 			"\twaterState\t\t - record of water states per hour, measured automatically\n"
 			"\twaterStateObserver\t - record of water states (frequency depends on the station), measured by an observer\n"
 			"\tdischarge\t\t - record of water discharge per hour, measured automatically\n"
 			"\twaterTemperatureAuto\t - record of a water temperature per hour, measured automatically\n"
 			"\twaterTemperatureObs\t - record of a water temperature (frequency depends on the station), measured by an observer\n"
+			"\n"
+			"\tThe data is available up to the last three days.\n"
+			"\tThe source of data is Insytut Meteorologii i Gospodarki Wodnej - Panstwowy Instytut Badawczy.\n"
+			"\tZrodlem pochodzenia danych jest Instytut Meteorologii i Gospodarki Wodnej – Panstwowy Instytut Badawczy\n"
 			);
 }
 
