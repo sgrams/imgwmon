@@ -46,6 +46,10 @@ int main (int argc, char **argv)
 		"tenMinutesPrecipRecords",
 		"temperatureAutoRecords",
 		"temperatureObsRecords",
+		"maxTemperatureAutoRecords",
+		"minTemperatureAutoRecords",
+		"maxTemperatureObsRecords",
+		"minTemperatureObsRecords",
 		"windDirectionTelRecords",
 		"windDirectionObsRecords",
 		"windVelocityTelRecords",
@@ -248,17 +252,26 @@ char *getData (size_t object_of_data, size_t target_id)
 
 void processData (char *data, size_t object_of_data, char *target_type_of_data, char *target_time)
 {
-	int i;
 	const char *main_path[] =
 	{target_type_of_data, NULL};
+	const char *temperatureAutoPath[] =
+	{"temperatureAutoRecords", NULL};
+	const char *temperatureObsPath[] =
+	{"temperatureObsRecords", NULL};
 	const char *current_precip_path[] =
 	{"state", NULL};
 	const char *current_water_path[] =
 	{"trend", NULL};
+	const char *current_river_path[] =
+	{"status", "river", NULL};
+
 	char errbuf[1024];
-	int array_length;
+
+	int i, array_length;
+	float target_result;
 
 	yajl_val main_node;
+	yajl_val object_target_type_of_data;
 	yajl_val arrays_target_type_of_data;
 	yajl_val keys_target_type_of_data;
 	yajl_val values_target_type_of_data;
@@ -272,87 +285,148 @@ void processData (char *data, size_t object_of_data, char *target_type_of_data, 
 			fprintf(stderr, "Unable to parse data. Parser returned %s.\n", errbuf);
 		exit(EXIT_FAILURE);
 	}
-	if(strcmp(target_type_of_data, "currentPrecipRecords") != 0 || strcmp(target_type_of_data, "currentWaterStateRecords") !=0)
+	if(!(strcmp(target_type_of_data, "currentPrecipRecords") == 0 ||
+			strcmp(target_type_of_data, "currentWaterStateRecords") == 0 ||
+			strcmp(target_type_of_data, "maxTemperatureAutoRecords") == 0 ||
+			strcmp(target_type_of_data, "minTemperatureAutoRecords") == 0 ||
+			strcmp(target_type_of_data, "maxTemperatureObsRecords") == 0 ||
+			strcmp(target_type_of_data, "minTemperatureObsRecords") == 0))
 	{
 		arrays_target_type_of_data = yajl_tree_get(main_node, main_path, yajl_t_array);
 		if (arrays_target_type_of_data)
 		{
 			array_length = arrays_target_type_of_data->u.array.len;
-			if (array_length)	
-			for (i=0; i<array_length; i++)
+			if (array_length)
 			{
-				keys_target_type_of_data = arrays_target_type_of_data->u.array.values[i];
-
-				if (strcmp(target_type_of_data, "waterStateRecords") == 0 ||
-						strcmp(target_type_of_data, "waterStateObserverRecords") == 0)
-					values_target_type_of_data = keys_target_type_of_data->u.object.values[1];
-				else
-					values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
-
-				if(strcmp(target_time, (char *)values_target_type_of_data->u.object.keys) == 0)
+				for (i=0; i<array_length; i++)
 				{
+					keys_target_type_of_data = arrays_target_type_of_data->u.array.values[i];
+
+					/*  waterStateRecords and waterStateObserverRecords have different fields in the JSON */
 					if (strcmp(target_type_of_data, "waterStateRecords") == 0 ||
 							strcmp(target_type_of_data, "waterStateObserverRecords") == 0)
-						values_target_type_of_data = keys_target_type_of_data->u.object.values[2];
+						values_target_type_of_data = keys_target_type_of_data->u.object.values[1];
 					else
-					values_target_type_of_data = keys_target_type_of_data->u.object.values[1];
+						values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
 
-					fprintf(stdout, "%.1lf ", values_target_type_of_data->u.number.d);
-					if (strcmp(target_type_of_data, "hourlyPrecipRecords") == 0 ||
-							strcmp(target_type_of_data, "dailyPrecipRecords") == 0 ||
-							strcmp(target_type_of_data, "tenMinutesPrecipRecords") == 0)
-						fprintf(stdout, "mm\n");
-					else if (strcmp(target_type_of_data, "temperatureAutoRecords") == 0 ||
-						strcmp(target_type_of_data, "temperatureObsRecords") == 0 ||
-						strcmp(target_type_of_data, "waterTemperatureAutoRecords") == 0 ||
-						strcmp(target_type_of_data, "waterTemperatureObsRecords") == 0)
-						fprintf(stdout, "°C\n");
-					else if (strcmp(target_type_of_data, "windDirectionTelRecords") == 0 ||
-							strcmp(target_type_of_data, "windDirectionObsRecords") == 0)
-						fprintf(stdout, "°\n");
+
+					if(strcmp(target_time, (char *)values_target_type_of_data->u.object.keys) == 0)
+					{
+						if (strcmp(target_type_of_data, "waterStateRecords") == 0 ||
+								strcmp(target_type_of_data, "waterStateObserverRecords") == 0)
+							values_target_type_of_data = keys_target_type_of_data->u.object.values[2];
+						else
+						values_target_type_of_data = keys_target_type_of_data->u.object.values[1];
+
+						fprintf(stdout, "%.1lf ", values_target_type_of_data->u.number.d);
+
+						if (strcmp(target_type_of_data, "hourlyPrecipRecords") == 0 ||
+								strcmp(target_type_of_data, "dailyPrecipRecords") == 0 ||
+								strcmp(target_type_of_data, "tenMinutesPrecipRecords") == 0)
+							fprintf(stdout, "mm\n");
+						else if (strcmp(target_type_of_data, "temperatureAutoRecords") == 0 ||
+								strcmp(target_type_of_data, "temperatureObsRecords") == 0 ||
+								strcmp(target_type_of_data, "waterTemperatureAutoRecords") == 0 ||
+								strcmp(target_type_of_data, "waterTemperatureObsRecords") == 0)
+							fprintf(stdout, "°C\n");
+						else if (strcmp(target_type_of_data, "windDirectionTelRecords") == 0 ||
+								strcmp(target_type_of_data, "windDirectionObsRecords") == 0)
+							fprintf(stdout, "°\n");
 					else if (strcmp(target_type_of_data, "windVelocityTelRecords") == 0 ||
-							strcmp(target_type_of_data, "windVelocityObsRecords") == 0 ||
-							strcmp(target_type_of_data, "windMaxVelocityRecords") == 0)
-						fprintf(stdout, "m/s\n");
+								strcmp(target_type_of_data, "windVelocityObsRecords") == 0 ||
+								strcmp(target_type_of_data, "windMaxVelocityRecords") == 0)
+							fprintf(stdout, "m/s\n");
 					else if (strcmp(target_type_of_data, "waterStateRecords") == 0 ||
-							strcmp(target_type_of_data, "waterStateObserverRecords") == 0)
-						fprintf(stdout, "cm\n");
+								strcmp(target_type_of_data, "waterStateObserverRecords") == 0)
+							fprintf(stdout, "cm\n");
 					else if (strcmp(target_type_of_data, "dischargeRecords") == 0)
-						fprintf(stdout, "m3/s\n");
+							fprintf(stdout, "m3/s\n");
+					}
 				}
 			}
-		}
+		}	
 	}
-	else
+
+	else if (strcmp(target_type_of_data, "currentPrecipRecords") == 0)
 	{
-		if(strcmp(target_type_of_data, "currentPrecipRecords") == 0)
+		object_target_type_of_data = yajl_tree_get(main_node, current_precip_path, yajl_t_string);
+		if (object_target_type_of_data)
 		{
-		keys_target_type_of_data = yajl_tree_get(main_node, current_precip_path, yajl_t_string);
-		if (keys_target_type_of_data)
-		{
-			if(strcmp("precip", (char *)keys_target_type_of_data->u.object.keys) == 0)
+			if(strcmp("precip", (char *)object_target_type_of_data->u.object.keys) == 0)
 				fprintf(stdout, "state: precipitation\n");
 			else
 				fprintf(stdout, "state: no precipitation\n");
 		}
-		}
-		else
-		{
-			keys_target_type_of_data = yajl_tree_get(main_node, current_precip_path, yajl_t_string);
-			if (keys_target_type_of_data)
-				fprintf(stdout, "state: %s\n", (char *)keys_target_type_of_data->u.object.keys);
-			keys_target_type_of_data = NULL;
-			keys_target_type_of_data = yajl_tree_get(main_node, current_water_path, yajl_t_string);
-			if (keys_target_type_of_data)
-				fprintf(stdout, "trend: %s\n", (char *)keys_target_type_of_data->u.object.keys);
-		}
+	}
+
+	else if (strcmp(target_type_of_data, "currentWaterStateRecords") == 0)
+	{
+		object_target_type_of_data = yajl_tree_get(main_node, current_river_path, yajl_t_string);
+		if (object_target_type_of_data)
+			fprintf(stdout, "river: %s, ", (char *)object_target_type_of_data->u.object.keys);
+		object_target_type_of_data = yajl_tree_get(main_node, current_precip_path, yajl_t_string);
+		if (object_target_type_of_data)
+			fprintf(stdout, "state: %s, ", (char *)object_target_type_of_data->u.object.keys);
+		object_target_type_of_data = yajl_tree_get(main_node, current_water_path, yajl_t_string);
+		if (object_target_type_of_data)
+			fprintf(stdout, "trend: %s\n", (char *)object_target_type_of_data->u.object.keys);
 	}
 	
+	else if (strcmp(target_type_of_data, "maxTemperatureAutoRecords") == 0 ||
+				strcmp(target_type_of_data, "maxTemperatureObsRecords") == 0 ||
+				strcmp(target_type_of_data, "minTemperatureAutoRecords") == 0 ||
+				strcmp(target_type_of_data, "minTemperatureObsRecords") == 0)
+	{
+		if (strcmp(target_type_of_data, "maxTemperatureAutoRecords") == 0 ||
+				strcmp(target_type_of_data, "minTemperatureAutoRecords") == 0)
+			arrays_target_type_of_data = yajl_tree_get(main_node, temperatureAutoPath, yajl_t_array);
+		else
+			arrays_target_type_of_data = yajl_tree_get(main_node, temperatureObsPath, yajl_t_array);
+			
+		if (arrays_target_type_of_data)
+		{
+			array_length = arrays_target_type_of_data->u.array.len;
+			if (array_length)
+			{
+				keys_target_type_of_data = arrays_target_type_of_data->u.array.values[0];
+				values_target_type_of_data = keys_target_type_of_data->u.object.values[1];
+				target_result = values_target_type_of_data->u.number.d;
+
+				values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
+				target_time = strndup((char*)values_target_type_of_data->u.object.keys, 21);
+
+				for (i=0; i<array_length; i++)
+				{
+					keys_target_type_of_data = arrays_target_type_of_data->u.array.values[i];
+					values_target_type_of_data = keys_target_type_of_data->u.object.values[1];
+
+					if (target_result >= values_target_type_of_data->u.number.d &&
+							(strcmp(target_type_of_data, "minTemperatureAutoRecords") == 0 ||
+							strcmp(target_type_of_data, "minTemperatureObsRecords") == 0))
+					{
+						target_result = values_target_type_of_data->u.number.d;
+						values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
+						target_time = strndup((char*)values_target_type_of_data->u.object.keys, 21);
+					}
+								
+					else if (target_result <= values_target_type_of_data->u.number.d &&
+							(strcmp(target_type_of_data, "maxTemperatureAutoRecords") == 0 ||
+							strcmp(target_type_of_data, "maxTemperatureObsRecords") == 0))
+					{
+						target_result = values_target_type_of_data->u.number.d;
+						values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
+						target_time = strndup((char*)values_target_type_of_data->u.object.keys, 21);
+					}
+				}
+			fprintf(stdout, "%.1f °C, %s\n", target_result, target_time);
+			}
+		}
+	}
 	yajl_tree_free(main_node);
 }
 void printInfo (void)
 {
-  fprintf(stderr,
+  fprintf(stdout,
       "imgwmon 0.1-git (C) 2016-2017 Stanislaw J. Grams <sjg@fmdx.pl>\n"
       "Usage: imgwmon <options>\n"
       "\t-h\t\tPrint usage information\n"
@@ -366,6 +440,10 @@ void printInfo (void)
 			"\ttenMinutesPrecip\t - precipitation per 10 minutes (date format=\"HH:MM\"),\n\t\t\t\t data available up to the last hour\n"
 			"\ttemperatureAuto\t\t - temperature per hour\n"
 			"\ttemperatureObs\t\t - temperature per hour, measured by an observer\n"
+			"\tminTemperatureAuto\t - minimum temperature during the last 48 hours\n"
+			"\tmaxTemperatureAuto\t - maximum temperature during the last 48 hours\n"
+			"\tminTemperatureObs\t - minimum temperature during the last 48 hours, measured by an observer\n"
+			"\tmaxTemperatureObs\t - maximum temperature during the last 48 hours, measured by an observer\n"
 			"\twindDirectionTel\t - wind direction per 10 minutes\n"
 			"\twindDirectionObs\t - wind direction per 1 hour, measured by an observer\n"
 			"\twindVelocityTel\t\t - average wind speed per 10 minutes\n"
@@ -380,10 +458,10 @@ void printInfo (void)
 			"\twaterTemperatureAuto\t - water temperature per hour\n"
 			"\twaterTemperatureObs\t - water temperature (frequency depends on the station),\n\t\t\t\t measured by an observer\n"
 			"\n"
-			"\tThe data is available up to the last three days.\n"
+			"\tThe data is available up to the last 48 hours.\n"
 			"\n"
 			"The source of data is Instytut Meteorologii i Gospodarki Wodnej - Panstwowy Instytut Badawczy.\n"
-			"Zrodlem pochodzenia danych jest Instytut Meteorologii i Gospodarki Wodnej – Panstwowy Instytut Badawczy\n"
+			"Zrodlem pochodzenia danych jest Instytut Meteorologii i Gospodarki Wodnej - Panstwowy Instytut Badawczy\n"
 			);
 }
 
@@ -396,7 +474,7 @@ WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
 	mem->memory = realloc(mem->memory, mem->size + realsize + 1);
 	if (mem->memory == NULL)
 	{
-		printf("Not enough memory!\n");
+		fprintf(stderr, "Not enough memory, returned %s\n", strerror(errno));
 		return 0;
 	}
 	memcpy(&(mem->memory[mem->size]), contents, realsize);
