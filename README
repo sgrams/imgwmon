@@ -1,7 +1,4 @@
-!!! ############# !!!
-!!! ## IMGWMON ## !!!
-!!! ############# !!!
-
+imgwmon 0.1-git
 Copyright 2016-2017 (C) Stanisław J. Grams
 
 This is unfinished, developmental version of imgwmon.
@@ -11,62 +8,61 @@ For more information about GNU and the Free Software Foundation,
 check out <http://www.gnu.org/>.
 
 1. BUILD
+  In order to compile imgwmon you will need gcc and dependencies. It may be possible to compile it with another gnu99 compiler.
+  It has been build and tested under GNU/Linux.
 
-In order to compile imgwmon you will need gcc and dependencies. It may be possible to compile it with another gnu99 compiler.
-It has been build and tested under GNU/Linux.
+  1.1 DEPENDENCIES
+    - libyajl/1.0.12
+    - libcurl/7.52.1
 
-1.1 DEPENDENCIES
-- libyajl/1.0.12
-- libcurl/7.52.1
-
-1.2 INSTALLING
-1. Run "gcc imgwmon.c -o imgwmon -Wall -ansi -pedantic -std=gnu99 -lcurl -lyajl".
-If you have troubles with compilation, doublecheck the dependencies.
-2. Make sure "./imgwmon" works properely.
-3. Copy "imgwmon" to the appriopriate public directory.
+  1.2 INSTALLING
+    1. Run "gcc imgwmon.c -o imgwmon -Wall -ansi -pedantic -std=gnu99 -lcurl -lyajl".
+       If you have troubles with compilation, doublecheck the dependencies.
+    2. Make sure "./imgwmon" works properely.
+    3. Copy "imgwmon" to the appriopriate public directory.
 
 2. RUNNING
-To check the temperature read from automatic sensors simply run the binary.
-All the data is available up to the last 48 hours.
+  To check the temperature read from automatic sensors simply run the binary.
+  All the data is available up to the last 48 hours.
 
-2.1 USAGE
-imgwmon <options>
--h  Prints usage information
--i  <id>   Set the station ID number (defaults are specified in the header of imgwmon.c file)
--d  <date> Set the date (YYYY-MM-DD HH:MM) (all times in UTC)
-    if the type of data is set to dailyPrecip (YYYY-MM-DD)
-    if empty - fetching latest possible
--t  <type> Set the type of fetching data (default is temperatureAuto)
+  2.1 USAGE
+    imgwmon <options>
+    -h  Prints usage information
+    -i  <id>   Set the station ID number (defaults are specified in the header of imgwmon.c file)
+    -d  <date> Set the date (YYYY-MM-DD HH:MM) (all times in UTC)
+        if the type of data is set to dailyPrecip (YYYY-MM-DD)
+        if empty - fetching latest possible
+    -t  <type> Set the type of fetching data (default is temperatureAuto)
 
-2.2 LIST OF AVAILABLE METEO TYPES
-currentPrecip       precipitation at the moment
-hourlyPrecip        precipitation per hour
-dailyPrecip         precipitation per day (date format="YYYY-MM-DD")
-tenMinutesPrecip    precipitation per 10 minutes (date format="HH:MM"),
-                    data available up to the last hour
-temperatureAuto     temperature per hour
-temperatureObs      temperature per hour, measured by an observer
-minTemperatureAuto  minimum temperature during the last 48 hours
-maxTemperatureAuto  maximum temperature during the last 48 hours
-minTemperatureObs   minimum temperature during the last 48 hours, measured by an observer
-maxTemperatureObs   maximum temperature during the last 48 hours, measured by an observer
-windDirectionTel    wind direction per 10 minutes
-windDirectionObs    wind direction per 1 hour, measured by an observer
-windVelocityTel     average wind speed per 10 minutes
-windVelocityObs     average wind speed per 1 hour, measured by an observer
-windMaxVelocity     maximum wind speed per 10 minutes
+  2.2 LIST OF AVAILABLE METEO TYPES
+    currentPrecip       precipitation at the moment
+    hourlyPrecip        precipitation per hour
+    dailyPrecip         precipitation per day (date format="YYYY-MM-DD")
+    tenMinutesPrecip    precipitation per 10 minutes (date format="HH:MM"),
+                        data available up to the last hour
+    temperatureAuto     temperature per hour
+    temperatureObs      temperature per hour, measured by an observer
+    minTemperatureAuto  minimum temperature during the last 48 hours
+    maxTemperatureAuto  maximum temperature during the last 48 hours
+    minTemperatureObs   minimum temperature during the last 48 hours, measured by an observer
+    maxTemperatureObs   maximum temperature during the last 48 hours, measured by an observer
+    windDirectionTel    wind direction per 10 minutes
+    windDirectionObs    wind direction per 1 hour, measured by an observer
+    windVelocityTel     average wind speed per 10 minutes
+    windVelocityObs     average wind speed per 1 hour, measured by an observer
+    windMaxVelocity     maximum wind speed per 10 minutes
 
-2.3 LIST OF AVAILABLE HYDRO TYPES
-currentWaterState     state of water and trend at the moment
-waterState            water states per hour
-waterStateObserver    water states (frequency depends on the station), measured by an observer
-discharge             water discharge per hour
-waterTemperatureAuto  water temperature per hour
-waterTemperatureObs   water temperature (frequency depends on the station), measured by an observer
+  2.3 LIST OF AVAILABLE HYDRO TYPES
+    currentWaterState     state of water and trend at the moment
+    waterState            water states per hour
+    waterStateObserver    water states (frequency depends on the station), measured by an observer
+    discharge             water discharge per hour
+    waterTemperatureAuto  water temperature per hour
+    waterTemperatureObs   water temperature (frequency depends on the station), measured by an observer
 
 3. SOURCE OF DATA
-The source of all data is
-Polish Institute of Meteorology and Water Management - National Research Institute.
+  The source of all data is
+  Polish Institute of Meteorology and Water Management - National Research Institute.
 
-Źródłem pochodzenia danych jest
-Instytut Meteorologii i Gospodarki Wodnej - Państwowy Instytut Badawczy.
+  Źródłem pochodzenia danych jest
+  Instytut Meteorologii i Gospodarki Wodnej - Państwowy Instytut Badawczy.
