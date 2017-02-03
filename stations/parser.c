@@ -58,7 +58,7 @@ void parseData (char *data, FILE *output)
 	errbuf[0]=0;
 	main_node = yajl_tree_parse((const char *) data, errbuf, sizeof(errbuf));
 	if(!main_node)
-		fprintf(stderr, "DUPA!\n");
+		fprintf(stderr, "Failed!\n");
 	arrays_target_data = yajl_tree_get(main_node, path, yajl_t_array);
 	if (arrays_target_data)
 	{
