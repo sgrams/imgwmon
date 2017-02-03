@@ -9,7 +9,8 @@ check out <http://www.gnu.org/>.
 
 1. BUILD
   In order to compile imgwmon you will need gcc and dependencies. It may be possible to compile it
-  with another gnu99 compiler. Imgwmon has been built and tested under "Arch Linux" distro of GNU/Linux.
+  with another gnu99 compiler.
+  Imgwmon has been built and tested under "Arch Linux" distro of GNU/Linux.
 
   1.1 DEPENDENCIES
     - libyajl/1.0.12
