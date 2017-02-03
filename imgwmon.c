@@ -242,7 +242,8 @@ char *getData (size_t object_of_data, size_t target_id)
 	res = curl_easy_perform(curl_handle);
 	if (res != CURLE_OK)
 	{
-		fprintf(stderr, "Failed to fetch data: %s\n", curl_easy_strerror(res));
+		if(verbose_flag)
+			fprintf(stderr, "Failed to fetch data: %s\n", curl_easy_strerror(res));
 	}
 	curl_easy_cleanup(curl_handle);
 	curl_global_cleanup();
