@@ -45,9 +45,9 @@ check out <http://www.gnu.org/>.
     minTemperatureAuto  minimum temperature during the last 48 hours
     maxTemperatureAuto  maximum temperature during the last 48 hours
     minTemperatureObs   minimum temperature during the last 48 hours,
-		                    measured by an observer
+                        measured by an observer
     maxTemperatureObs   maximum temperature during the last 48 hours,
-		                    measured by an observer
+                        measured by an observer
     windDirectionTel    wind direction per 10 minutes
     windDirectionObs    wind direction per 1 hour, measured by an observer
     windVelocityTel     average wind speed per 10 minutes
@@ -58,11 +58,11 @@ check out <http://www.gnu.org/>.
     currentWaterState     state of water and trend at the moment
     waterState            water states per hour
     waterStateObserver    water states (frequency depends on the station),
-		                      measured by an observer
+                          measured by an observer
     discharge             water discharge per hour
     waterTemperatureAuto  water temperature per hour
     waterTemperatureObs   water temperature (frequency depends on the station),
-		                      measured by an observer
+                          measured by an observer
 
 3. SOURCE OF DATA
   The source of all data is
