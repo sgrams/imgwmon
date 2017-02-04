@@ -65,7 +65,11 @@ check out <http://www.gnu.org/>.
     waterTemperatureObs   water temperature (frequency depends on the station),
                           measured by an observer
 
-3. SOURCE OF DATA
+3. AVAILABLE STATIONS
+  The lists of HYDRO and METEO stations are located in "stations" directory. IDs may be
+  also fetched from http://www.pogodynka.pl/
+
+4. SOURCE OF DATA
   The source of all data is
   Polish Institute of Meteorology and Water Management - National Research Institute.
 
