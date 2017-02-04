@@ -22,12 +22,21 @@ void parseData (char *data, FILE *output);
 
 int main (void)
 {
-	int i, licznik=0;
+	int licznik=0;
 	char *data_target;
-	char ch;
 	FILE *data = fopen("data.txt", "r");
 	FILE *output = fopen("output.txt", "w");
 
+	if (!data)
+	{
+		fprintf(stderr, "Unable to open \"data.txt\" file\n");
+		return EXIT_FAILURE;
+	}
+	if (!output)
+	{
+		fprintf(stderr, "Unable to open \"output.txt\" file\n");
+		return EXIT_FAILURE;
+	}
 
 	fseek(data, 0, SEEK_END);
 	licznik = ftell(data);
@@ -46,7 +55,7 @@ int main (void)
 }
 void parseData (char *data, FILE *output)
 {
-	const char *path[] = {NULL};
+	char *path[] = {NULL};
 	char errbuf[1024];
 	int i, array_length;
 	
@@ -58,8 +67,8 @@ void parseData (char *data, FILE *output)
 	errbuf[0]=0;
 	main_node = yajl_tree_parse((const char *) data, errbuf, sizeof(errbuf));
 	if(!main_node)
-		fprintf(stderr, "Failed!\n");
-	arrays_target_data = yajl_tree_get(main_node, path, yajl_t_array);
+		fprintf(stderr, "Unable to parse JSON string!\n");
+	arrays_target_data = yajl_tree_get(main_node, (const char **) path, yajl_t_array);
 	if (arrays_target_data)
 	{
 		array_length = arrays_target_data->u.array.len;
@@ -69,9 +78,9 @@ void parseData (char *data, FILE *output)
 			{
 				keys_target_data = arrays_target_data->u.array.values[i];
 				values_target_data = keys_target_data->u.object.values[2];
-				fprintf(output, "%s ", values_target_data->u.object.keys);
+				fprintf(output, "%s ", (char *)values_target_data->u.object.keys);
 				values_target_data = keys_target_data->u.object.values[3];
-				fprintf(output, "%s\n", values_target_data->u.object.keys);
+				fprintf(output, "%s\n", (char *)values_target_data->u.object.keys);
 			}
 		}
 	}
