@@ -119,7 +119,7 @@ int main (int argc, char **argv)
 				}
 				else if (strcmp(target_type_of_data, "dailyPrecipRecords") == 0 && strlen(optarg) == 10)
 				{
-					/* YYYY-MM-DD specified */
+					/* if YYYY-MM-DD is specified */
 					strcpy(target_time, optarg);
 					strncat(target_time, "T06:00:00Z", 7);
 				}
@@ -138,7 +138,7 @@ int main (int argc, char **argv)
 				}
 				else
 				{
-					/* YYYY-MM-DD HH:MM specified*/
+					/* if YYYY-MM-DD HH:MM is specified */
 					strcpy(target_time, optarg);
 					strncat(target_time, ":00Z", 5);
 					target_time[10] = 'T';
@@ -276,9 +276,11 @@ void processData (char *data, size_t object_of_data, char *target_type_of_data, 
 	const char *temperatureObsPath[] =
 	{"temperatureObsRecords", NULL};
 	const char *current_precip_path[] =
-	{"state", NULL};
-	const char *current_water_path[] =
+	{"status", "precip", "value", NULL};
+	const char *current_trend_path[] =
 	{"trend", NULL};
+	const char *current_state_path[] =
+	{"state", NULL};
 	const char *current_river_path[] =
 	{"status", "river", NULL};
 
@@ -296,13 +298,13 @@ void processData (char *data, size_t object_of_data, char *target_type_of_data, 
 	errbuf[0] = 0;
 
 	main_node = yajl_tree_parse((const char *) data, errbuf, sizeof(errbuf));
-	if(!main_node)
+	if (!main_node)
 	{
 		if(verbose_flag)
 			fprintf(stderr, "Unable to parse data. Parser returned %s.\n", errbuf);
 		exit(EXIT_FAILURE);
 	}
-	if(!(strcmp(target_type_of_data, "currentPrecipRecords") == 0 ||
+	if (!(strcmp(target_type_of_data, "currentPrecipRecords") == 0 ||
 			strcmp(target_type_of_data, "currentWaterStateRecords") == 0 ||
 			strcmp(target_type_of_data, "maxTemperatureAutoRecords") == 0 ||
 			strcmp(target_type_of_data, "minTemperatureAutoRecords") == 0 ||
@@ -366,10 +368,10 @@ void processData (char *data, size_t object_of_data, char *target_type_of_data, 
 
 	else if (strcmp(target_type_of_data, "currentPrecipRecords") == 0)
 	{
-		object_target_type_of_data = yajl_tree_get(main_node, current_precip_path, yajl_t_string);
+		object_target_type_of_data = yajl_tree_get(main_node, current_precip_path, yajl_t_number);
 		if (object_target_type_of_data)
 		{
-			if(strcmp("precip", (char *)object_target_type_of_data->u.object.keys) == 0)
+			if(object_target_type_of_data->u.number.d != 0)
 				fprintf(stdout, "state: precipitation\n");
 			else
 				fprintf(stdout, "state: no precipitation\n");
@@ -381,10 +383,10 @@ void processData (char *data, size_t object_of_data, char *target_type_of_data, 
 		object_target_type_of_data = yajl_tree_get(main_node, current_river_path, yajl_t_string);
 		if (object_target_type_of_data)
 			fprintf(stdout, "river: %s, ", (char *)object_target_type_of_data->u.object.keys);
-		object_target_type_of_data = yajl_tree_get(main_node, current_precip_path, yajl_t_string);
+		object_target_type_of_data = yajl_tree_get(main_node, current_state_path, yajl_t_string);
 		if (object_target_type_of_data)
 			fprintf(stdout, "state: %s, ", (char *)object_target_type_of_data->u.object.keys);
-		object_target_type_of_data = yajl_tree_get(main_node, current_water_path, yajl_t_string);
+		object_target_type_of_data = yajl_tree_get(main_node, current_trend_path, yajl_t_string);
 		if (object_target_type_of_data)
 			fprintf(stdout, "trend: %s\n", (char *)object_target_type_of_data->u.object.keys);
 	}
