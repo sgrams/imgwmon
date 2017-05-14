@@ -216,7 +216,7 @@ int main (int argc, char **argv)
 							target_time[11]='0'; target_time[13]=':';
 							target_time[12]='6'; target_time[14]='0';
 							target_time[15]='0'; target_time[16]=':';
-							target_time[17]='0'; target_time[18]='0';
+							target_time[17]=':'; target_time[18]='0';
 							target_time[19]='Z';
 					}
 
