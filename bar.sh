@@ -3,7 +3,7 @@ ICON_SUNNY="☀"
 ICON_RAINY="☂"
 SYMBOL_CELSIUS="℃"
 
-SSID=$(iw dev wlp3s0 link | grep SSID | cut -d " " -f 2-)
+SSID=$(iw dev wlp4s0 link | grep SSID | cut -d " " -f 2-)
 
 if [ "${SSID}" = "" ]; then
 	STATION_ID=""
@@ -12,7 +12,7 @@ else
 fi
 
 PRECIP=$(imgwmon -i ${STATION_ID} -t currentPrecip | cut -d " " -f 2-)
-WIND=$(imgwmon -i ${STATION_ID} -t windDirectionTel -d "`date -u +"%Y-%m-%d %H:00"`" | cut -d " " -f -1)
+WIND=$(imgwmon -i ${STATION_ID} -d"`date -u +"%Y-%m-%d %H:00"`" -t windDirectionTel | cut -d " " -f -1)
 
 if [[ ${WIND} ]]; then
 	if (( $(echo "${WIND} >= 0.0" | bc -l) )) && (( $(echo "${WIND} < 22.5" | bc -l) )); then
@@ -37,8 +37,8 @@ if [[ ${WIND} ]]; then
 fi
 if [[ ${PRECIP} ]]; then
 	if [ "${PRECIP}" = "no precipitation" ]; then
-		echo "${ICON_WIND} `imgwmon -i ${STATION_ID} -t windVelocityTel -d "$(date -u +"%Y-%m-%d %H:00")"`  ${ICON_SUNNY} `imgwmon -i ${STATION_ID} | cut -d " " -f -1` ${SYMBOL_CELSIUS}"
+		echo "${ICON_WIND} `imgwmon -i ${STATION_ID} -d "$(date -u +"%Y-%m-%d %H:00")" -t windVelocityTel`  ${ICON_SUNNY} `imgwmon -i ${STATION_ID} | cut -d " " -f -1` ${SYMBOL_CELSIUS}"
 	else
-		echo "${ICON_WIND} `imgwmon -i ${STATION_ID} -t windVelocityTel -d "$(date -u +"%Y-%m-%d %H:00")"`  ${ICON_RAINY} `imgwmon -i ${STATION_ID} | cut -d " " -f -1` ${SYMBOL_CELSIUS}"
+		echo "${ICON_WIND} `imgwmon -i ${STATION_ID} -d "$(date -u +"%Y-%m-%d %H:00")" -t windVelocityTel`  ${ICON_RAINY} `imgwmon -i ${STATION_ID} | cut -d " " -f -1` ${SYMBOL_CELSIUS}"
 	fi
 fi
