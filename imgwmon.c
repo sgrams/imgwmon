@@ -84,13 +84,15 @@ int main (int argc, char **argv)
 	char target_time[21];
 	char *data = NULL;
 
-	int target_id = METEO_STATION_ID;
+	int target_id = 0;
+	int id = 0;
 	int option_index = 0;
 	int c, i;
 	
 	time_t temp_time = time(NULL);
 	struct tm *real_time_struct;
 
+	short t = -1;
 	short object_of_data = 0;
 	short target_object_of_data = 0;
 
@@ -167,6 +169,7 @@ int main (int argc, char **argv)
 					target_id = atoi(optarg);
 				break;
 			case 't':
+				t = 1;
 				target_type_of_data = malloc(1);
 				temp_target_type_of_data = malloc(strlen(optarg) + strlen("Records") + 1);
 
@@ -235,12 +238,14 @@ int main (int argc, char **argv)
 							strcmp(target_type_of_data, "waterTemperatureAutoRecords") == 0 ||
 							strcmp(target_type_of_data, "waterTemperatureObsRecords") == 0)
 					{
-						target_id = HYDRO_STATION_ID;
+						if(!target_id)
+							target_id = HYDRO_STATION_ID;
 						object_of_data = 1; 
 					}
 					else						
 					{
-						target_id = METEO_STATION_ID;
+						if(!target_id)
+							target_id = METEO_STATION_ID;
 						object_of_data = 0;
 					}
 				}
@@ -251,13 +256,14 @@ int main (int argc, char **argv)
 					fprintf(stderr, "target_id\t\t = %d\n", target_id);
 				}
 
-				if (data == NULL || object_of_data != target_object_of_data)
+				if (data == NULL || object_of_data != target_object_of_data || id != target_id)
 				{
 					data = malloc(1);
 					if (verbose_flag)
 						fprintf(stderr, "...retrieving data\n");
 
 					target_object_of_data = object_of_data;
+					id = target_id;
 					data = getData(target_object_of_data, target_id);
 				}
 				processData(data, object_of_data, target_type_of_data, target_time);
@@ -269,11 +275,19 @@ int main (int argc, char **argv)
 				break;
 		}
 	}
-	if (argc < 2)
+	if (optind < 2)
 	{
 		fprintf(stderr, "Syntax: imgwmon [OPTIONS] ...\nTry `imgwmon --help` for more information.\n");
 		return EXIT_FAILURE;
 	}
+	
+	if (t == -1)
+	{
+		fprintf(stderr, "Type of data parameter is mandatory!\n");
+		fprintf(stderr, "Syntax: imgwmon [OPTIONS] ...\nTry `imgwmon --help` for more information.\n");
+		return EXIT_FAILURE;
+	}
+
 	free(data);
 	free(target_type_of_data);
 	free(temp_target_type_of_data);
