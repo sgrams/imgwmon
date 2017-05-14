@@ -37,8 +37,8 @@ if [[ ${WIND} ]]; then
 fi
 if [[ ${PRECIP} ]]; then
 	if [ "${PRECIP}" = "no precipitation" ]; then
-		echo "${ICON_WIND} `imgwmon -i ${STATION_ID} -d "$(date -u +"%Y-%m-%d %H:00")" -t windVelocityTel`  ${ICON_SUNNY} `imgwmon -i ${STATION_ID} | cut -d " " -f -1` ${SYMBOL_CELSIUS}"
+		echo "${ICON_WIND} `imgwmon -i ${STATION_ID} -d "$(date -u +"%Y-%m-%d %H:00")" -t windVelocityTel`  ${ICON_SUNNY} `imgwmon -i ${STATION_ID} -t temperatureAuto| cut -d " " -f -1` ${SYMBOL_CELSIUS}"
 	else
-		echo "${ICON_WIND} `imgwmon -i ${STATION_ID} -d "$(date -u +"%Y-%m-%d %H:00")" -t windVelocityTel`  ${ICON_RAINY} `imgwmon -i ${STATION_ID} | cut -d " " -f -1` ${SYMBOL_CELSIUS}"
+		echo "${ICON_WIND} `imgwmon -i ${STATION_ID} -d "$(date -u +"%Y-%m-%d %H:00")" -t windVelocityTel`  ${ICON_RAINY} `imgwmon -i ${STATION_ID} -t temperatureAuto| cut -d " " -f -1` ${SYMBOL_CELSIUS}"
 	fi
 fi
