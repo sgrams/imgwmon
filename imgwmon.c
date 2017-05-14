@@ -288,9 +288,8 @@ int main (int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	free(data);
 	free(target_type_of_data);
-	free(temp_target_type_of_data);
+	free(data);
 	return EXIT_SUCCESS;
 }
 char *getData (short object_of_data, size_t target_id)
