@@ -266,9 +266,6 @@ int main (int argc, char **argv)
 				fprintf(stderr, "Syntax: imgwmon [OPTIONS] ...\nTry `imgwmon --help` for more information.\n");
 				return EXIT_FAILURE;
 			default:
-				free(target_type_of_data);
-				free(temp_target_type_of_data);
-				free(data);
 				break;
 		}
 	}
@@ -277,6 +274,9 @@ int main (int argc, char **argv)
 		fprintf(stderr, "Syntax: imgwmon [OPTIONS] ...\nTry `imgwmon --help` for more information.\n");
 		return EXIT_FAILURE;
 	}
+	free(data);
+	free(target_type_of_data);
+	free(temp_target_type_of_data);
 	return EXIT_SUCCESS;
 }
 char *getData (short object_of_data, size_t target_id)
