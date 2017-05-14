@@ -29,12 +29,13 @@ check out <http://www.gnu.org/>.
   2.1 USAGE
     imgwmon <options>
     -h  Prints usage information
-    -i  <id>   Set the station ID number (defaults are specified in the header of imgwmon.c file)
+    -i  <id>   Set the station ID number
+        (defaults are specified in the header of imgwmon.c file)
     -d  <date> Set the date (YYYY-MM-DD HH:MM) (all times in UTC)
         if the type of data is set to dailyPrecip (YYYY-MM-DD)
         if empty - fetching latest possible
-        ! The date is required to be set before data type !
-    -t  <type> Set the type of fetching data (default is temperatureAuto)
+    ! The date is required to be set before data type !
+    -t  <type> Set the type of fetching data
 
   2.2 LIST OF AVAILABLE METEO TYPES
     currentPrecip       precipitation at the moment
