@@ -97,7 +97,7 @@ int main (int argc, char **argv)
 	real_time_struct = gmtime(&temp_time);
 	strftime(target_time, 21, "%Y-%m-%dT%H:00:00Z", real_time_struct);
 
-	while ((c = getopt_long (argc, argv, "hvd:t:i:", long_options, &option_index)) != -1)
+	while ((c = getopt_long (argc, argv, "hvd:i:t:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -157,6 +157,15 @@ int main (int argc, char **argv)
 						fprintf(stderr, "Date and time unspecified. Using defaults!\n");
 				}
 				break;
+			case 'i':
+				if (optarg == NULL || atoi(optarg)==0 || strlen(optarg) != 9)
+				{
+					if (verbose_flag)
+						fprintf(stderr, "The specified ID is invalid, using defaults.\n");
+				}
+				else
+					target_id = atoi(optarg);
+				break;
 			case 't':
 				target_type_of_data = malloc(1);
 				temp_target_type_of_data = malloc(strlen(optarg) + strlen("Records") + 1);
@@ -192,7 +201,6 @@ int main (int argc, char **argv)
 						}
 						else if (strcmp(target_type_of_data, "dailyPrecipRecords") == 0)
 						{
-							printf("strlen(target_time)=%i\n", strlen(target_time));
 							real_time_struct = gmtime(&temp_time);
 							real_time_struct->tm_min = real_time_struct->tm_min - (real_time_struct->tm_min)%10;
 							strftime(target_time, 21, "%Y-%m-%dT06:00:00Z", real_time_struct);
@@ -213,8 +221,8 @@ int main (int argc, char **argv)
 					// forcing dailyPrecip HH:MM to 06:00
 					if (strcmp(target_type_of_data, "dailyPrecipRecords") == 0)
 					{
-							target_time[11]='0'; target_time[13]=':';
-							target_time[12]='6'; target_time[14]='0';
+							target_time[11]='0'; target_time[12]='6';
+							target_time[13]=':'; target_time[14]='0';
 							target_time[15]='0'; target_time[16]=':';
 							target_time[17]=':'; target_time[18]='0';
 							target_time[19]='Z';
@@ -256,15 +264,6 @@ int main (int argc, char **argv)
 
 				free(temp_target_type_of_data);
 				free(target_type_of_data);
-				break;
-			case 'i':
-				if (optarg == NULL || atoi(optarg)==0 || strlen(optarg) != 9)
-				{
-					if (verbose_flag)
-						fprintf(stderr, "The specified ID is invalid, using defaults.\n");
-				}
-				else
-					target_id = atoi(optarg);
 				break;
 			case '?':
 				fprintf(stderr, "Syntax: imgwmon [OPTIONS] ...\nTry `imgwmon --help` for more information.\n");
@@ -507,9 +506,10 @@ void printInfo (void)
       "imgwmon 0.1-git (C) 2016-2017 Stanislaw J. Grams <sjg@fmdx.pl>\n"
       "Usage: imgwmon <options>\n"
       "\t-h\t\tPrint usage information\n"
-      "\t-i <id>\t\tSet the station id number (default=\"253190220\")\n"
+      "\t-i <id>\t\tSet the station id number\n"
       "\t-d <date>\tSet the date of fetching data (date format=\"YYYY-MM-DD HH:MM\" UTC),\n\t\t\tif empty - fetching latest\n"
-      "\t-t <type>\tSet the type of fetching data (default=\"temperatureAuto\")\n\n"
+			"\t! The date is required to be set before data type !\n"
+      "\t-t <type>\tSet the type of fetching data\n\n"
 			"\tList of available METEO data types:\n"
 			"\tcurrentPrecip\t\t - precipitation at the moment\n"
 			"\thourlyPrecip\t\t - precipitation per hour\n"
