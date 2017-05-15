@@ -569,6 +569,7 @@ void info_print (void)
       "imgwmon 0.1-git (C) 2016-2017 Stanislaw J. Grams <sjg@fmdx.pl>\n"
       "Usage: imgwmon <options>\n"
       "\t-h\t\tPrint usage information\n"
+	  "\t-s\t\tEdit configuration\n"
       "\t-i <id>\t\tSet the station id number\n"
       "\t-d <date>\tSet the date of fetching data (date format=\"YYYY-MM-DD HH:MM\" UTC),\n\t\t\tif empty - fetching latest\n"
 			"\t! The date is required to be set before data type !\n"
