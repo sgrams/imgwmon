@@ -14,24 +14,56 @@
  *
  */
 
+#include <glib.h>
+
 #include <stdlib.h>
 #include <stdio.h>
+
 #include <string.h>
 #include <getopt.h>
+#include <unistd.h>
 #include <time.h>
 #include <curl/curl.h>
 #include <errno.h>
-#include <yajl/yajl_tree.h>  
+#include <yajl/yajl_tree.h>
 
-#define METEO_STATION_ID 253190220
-#define HYDRO_STATION_ID 153190150
+#include "conf.h"
 
-void printInfo (void);
-char *getData (short object_of_data, size_t target_id);
-void processData (char *data, short object_of_data, char *target_type_of_data, char *target_time);
+/*static const gchar*
+get_config_path (gint argc, gchar *argv)
+{
+	gchar *path = NULL;
+	gint c;
+	while ((c = getopt(argc, argv, "c:")) != -1)
+	{
+		switch (c)
+		{
+			case 'c':
+				path = optarg;
+				break;
+			case '?':
+				if (optopt == 'c')
+					fprintf(stderr, "No configuration path argument found, using default.\n");
+				break;
+			default:
+				fprintf(stdout, "%c\n", c);
+				break;
+		}
+	}
+	return path;
+} */
+
+char *
+data_get (gshort object_of_data, size_t target_id);
+
+void
+data_process (char *data, gshort object_of_data, char *target_type_of_data, char *target_time);
+
+void
+info_print (void);
 
 static size_t
-WriteMemoryCallback (void *contents, size_t size, size_t nmemb, void *userp);
+write_memory_callback (void *contents, size_t size, size_t nmemb, void *userp);
 
 struct MemoryStruct
 {
@@ -39,9 +71,9 @@ struct MemoryStruct
 	size_t size;
 };
 
-static int verbose_flag = 0;
+static gint verbose_flag = 0;
 
-int main (int argc, char **argv)
+gint main (gint argc, char **argv)
 {
 	static struct option long_options[] =
 	{
@@ -79,35 +111,54 @@ int main (int argc, char **argv)
 		NULL
 	};
 
-	char *target_type_of_data;
-	char *temp_target_type_of_data;
-	char target_time[21];
-	char *data = NULL;
+	gchar *target_type_of_data;
+	gchar *temp_target_type_of_data;
+	gchar target_time[21];
+	gchar *data = NULL;
 
-	int target_id = 0;
-	int id = 0;
-	int option_index = 0;
-	int c, i;
+	gint target_id = 0;
+
+	gint option_index = 0;
+	gint c, i;
+
+	gshort t = -1;
+	gshort object_of_data = 0;
+	gshort target_object_of_data = 0;
+
+	gint id = 0;
+	gint id_meteo;
+	gint id_hydro;
 	
 	time_t temp_time = time(NULL);
 	struct tm *real_time_struct;
 
-	short t = -1;
-	short object_of_data = 0;
-	short target_object_of_data = 0;
+	conf_init(NULL);
+	id_meteo = conf_get_main_id_meteo();
+	id_hydro = conf_get_main_id_hydro();
 
 	real_time_struct = gmtime(&temp_time);
 	strftime(target_time, 21, "%Y-%m-%dT%H:00:00Z", real_time_struct);
 
-	while ((c = getopt_long (argc, argv, "hvd:i:t:", long_options, &option_index)) != -1)
+	while ((c = getopt_long (argc, argv, "hsvd:i:t:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
+			case 's':
+				printf("Type the id of METEO station: ");
+				scanf("%i", &id_meteo);
+				printf("Type the id of HYDRO station: ");
+				scanf("%i", &id_hydro);
+
+				conf_set_main_id_meteo(id_meteo);
+				conf_set_main_id_hydro(id_hydro);
+
+				conf_save();
+				return EXIT_SUCCESS;
 			case 'v':
 				verbose_flag = 1;
 				break;
 			case 'h':
-				printInfo();
+				info_print();
 				return EXIT_SUCCESS;
 			case 'd':
 				if (optind == argc)
@@ -239,13 +290,13 @@ int main (int argc, char **argv)
 							strcmp(target_type_of_data, "waterTemperatureObsRecords") == 0)
 					{
 						if(!target_id)
-							target_id = HYDRO_STATION_ID;
+							target_id = id_hydro;
 						object_of_data = 1; 
 					}
 					else						
 					{
 						if(!target_id)
-							target_id = METEO_STATION_ID;
+							target_id = id_meteo;
 						object_of_data = 0;
 					}
 				}
@@ -264,9 +315,9 @@ int main (int argc, char **argv)
 
 					target_object_of_data = object_of_data;
 					id = target_id;
-					data = getData(target_object_of_data, target_id);
+					data = data_get(target_object_of_data, target_id);
 				}
-				processData(data, object_of_data, target_type_of_data, target_time);
+				data_process(data, object_of_data, target_type_of_data, target_time);
 				break;
 			case '?':
 				fprintf(stderr, "Syntax: imgwmon [OPTIONS] ...\nTry `imgwmon --help` for more information.\n");
@@ -288,17 +339,18 @@ int main (int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	conf_save();
 	free(target_type_of_data);
 	free(data);
 	return EXIT_SUCCESS;
 }
-char *getData (short object_of_data, size_t target_id)
+gchar *data_get (gshort object_of_data, size_t target_id)
 { 
 	CURL *curl_handle;
 	CURLcode res;
 
-	char url[] = "http://monitor.pogodynka.pl/api/station/meteo/?id=";
-	char buffer[11];
+	gchar url[] = "http://monitor.pogodynka.pl/api/station/meteo/?id=";
+	gchar buffer[11];
 	struct MemoryStruct chunk;
 
 	chunk.memory = malloc(1);
@@ -321,7 +373,7 @@ char *getData (short object_of_data, size_t target_id)
 
 	curl_easy_setopt(curl_handle, CURLOPT_URL, url);
 	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "imgwmon-agent/0.1");
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_memory_callback);
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
 	res = curl_easy_perform(curl_handle);
 	if (res != CURLE_OK)
@@ -335,26 +387,26 @@ char *getData (short object_of_data, size_t target_id)
 	return chunk.memory;
 }
 
-void processData (char *data, short object_of_data, char *target_type_of_data, char *target_time)
+void data_process (gchar *data, gshort object_of_data, gchar *target_type_of_data, gchar *target_time)
 {
-	const char *main_path[] =
+	const gchar *main_path[] =
 	{target_type_of_data, NULL};
-	const char *temperatureAutoPath[] =
+	const gchar *temperatureAutoPath[] =
 	{"temperatureAutoRecords", NULL};
-	const char *temperatureObsPath[] =
+	const gchar *temperatureObsPath[] =
 	{"temperatureObsRecords", NULL};
-	const char *current_precip_path[] =
+	const gchar *current_precip_path[] =
 	{"status", "precip", "value", NULL};
-	const char *current_trend_path[] =
+	const gchar *current_trend_path[] =
 	{"trend", NULL};
-	const char *current_state_path[] =
+	const gchar *current_state_path[] =
 	{"state", NULL};
-	const char *current_river_path[] =
+	const gchar *current_river_path[] =
 	{"status", "river", NULL};
 
-	char errbuf[1024];
+	gchar errbuf[1024];
 
-	int i, array_length;
+	gint i, array_length;
 	float target_result;
 
 	yajl_val main_node;
@@ -365,7 +417,7 @@ void processData (char *data, short object_of_data, char *target_type_of_data, c
 
 	errbuf[0] = 0;
 
-	main_node = yajl_tree_parse((const char *) data, errbuf, sizeof(errbuf));
+	main_node = yajl_tree_parse((const gchar *) data, errbuf, sizeof(errbuf));
 	if (!main_node)
 	{
 		if(verbose_flag)
@@ -397,7 +449,7 @@ void processData (char *data, short object_of_data, char *target_type_of_data, c
 						values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
 
 
-					if(strcmp(target_time, (char *)values_target_type_of_data->u.object.keys) == 0)
+					if(strcmp(target_time, (gchar *)values_target_type_of_data->u.object.keys) == 0)
 					{
 						if (strcmp(target_type_of_data, "waterStateRecords") == 0 ||
 								strcmp(target_type_of_data, "waterStateObserverRecords") == 0)
@@ -450,13 +502,13 @@ void processData (char *data, short object_of_data, char *target_type_of_data, c
 	{
 		object_target_type_of_data = yajl_tree_get(main_node, current_river_path, yajl_t_string);
 		if (object_target_type_of_data)
-			fprintf(stdout, "river: %s, ", (char *)object_target_type_of_data->u.object.keys);
+			fprintf(stdout, "river: %s, ", (gchar *)object_target_type_of_data->u.object.keys);
 		object_target_type_of_data = yajl_tree_get(main_node, current_state_path, yajl_t_string);
 		if (object_target_type_of_data)
-			fprintf(stdout, "state: %s, ", (char *)object_target_type_of_data->u.object.keys);
+			fprintf(stdout, "state: %s, ", (gchar *)object_target_type_of_data->u.object.keys);
 		object_target_type_of_data = yajl_tree_get(main_node, current_trend_path, yajl_t_string);
 		if (object_target_type_of_data)
-			fprintf(stdout, "trend: %s\n", (char *)object_target_type_of_data->u.object.keys);
+			fprintf(stdout, "trend: %s\n", (gchar *)object_target_type_of_data->u.object.keys);
 	}
 	
 	else if (strcmp(target_type_of_data, "maxTemperatureAutoRecords") == 0 ||
@@ -480,7 +532,7 @@ void processData (char *data, short object_of_data, char *target_type_of_data, c
 				target_result = values_target_type_of_data->u.number.d;
 
 				values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
-				target_time = strndup((char*)values_target_type_of_data->u.object.keys, 21);
+				target_time = strndup((gchar*)values_target_type_of_data->u.object.keys, 21);
 
 				for (i=0; i<array_length; i++)
 				{
@@ -493,7 +545,7 @@ void processData (char *data, short object_of_data, char *target_type_of_data, c
 					{
 						target_result = values_target_type_of_data->u.number.d;
 						values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
-						target_time = strndup((char*)values_target_type_of_data->u.object.keys, 21);
+						target_time = strndup((gchar*)values_target_type_of_data->u.object.keys, 21);
 					}
 								
 					else if (target_result <= values_target_type_of_data->u.number.d &&
@@ -502,7 +554,7 @@ void processData (char *data, short object_of_data, char *target_type_of_data, c
 					{
 						target_result = values_target_type_of_data->u.number.d;
 						values_target_type_of_data = keys_target_type_of_data->u.object.values[0];
-						target_time = strndup((char*)values_target_type_of_data->u.object.keys, 21);
+						target_time = strndup((gchar*)values_target_type_of_data->u.object.keys, 21);
 					}
 				}
 			fprintf(stdout, "%.1f °C, %s\n", target_result, target_time);
@@ -511,7 +563,7 @@ void processData (char *data, short object_of_data, char *target_type_of_data, c
 	}
 	yajl_tree_free(main_node);
 }
-void printInfo (void)
+void info_print (void)
 {
   fprintf(stdout,
       "imgwmon 0.1-git (C) 2016-2017 Stanislaw J. Grams <sjg@fmdx.pl>\n"
@@ -554,7 +606,7 @@ void printInfo (void)
 }
 
 static size_t
-WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
+write_memory_callback (void *contents, size_t size, size_t nmemb, void *userp)
 {
 	size_t realsize = size * nmemb;
 	struct MemoryStruct *mem = (struct MemoryStruct *)userp;
