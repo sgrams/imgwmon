@@ -1,3 +1,21 @@
+/* 
+ *  imgwmon 0.1-git
+ *  (C) 2016-2017 Stanisław J. Grams <sjg@fmdx.pl>
+ * 
+ *	conf.c
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 3
+ *  of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ */
+
 #include <glib/gstdio.h>
 #include <string.h>
 #include "conf.h"
@@ -20,7 +38,6 @@ conf
 
 static conf_t conf;
 static void conf_read();
-
 
 void
 conf_init (const gchar *custom_path)
@@ -56,7 +73,7 @@ conf_read()
         conf_save();
 }
 
-static gint
+gint
 conf_read_integer (const gchar *group_name,
                 const gchar *key,
                 gint default_value)
@@ -102,7 +119,7 @@ conf_save ()
         out = fwrite(configuration, sizeof(char), length, fp);
         if (out != length)
         {
-        fprintf (stderr, "Failed to save the configuration to a file: %s\n(wrote only %d of %d bytes)\n",
+        fprintf (stderr, "Failed to save the configuration to a file: %s\n(wrote only %lu of %lu bytes)\n",
                 conf.path, out, length);
         }
         fclose(fp);

@@ -2,7 +2,7 @@
  *  imgwmon 0.1-git
  *  (C) 2016-2017 Stanisław J. Grams <sjg@fmdx.pl>
  * 
- *	conf.h
+ *	data.h
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -16,19 +16,20 @@
  *
  */
 
-#ifndef IMGWMON_CONF_H_
-#define IMGWMON_CONF_H_
+#ifndef IMGWMON_DATA_H_
+#define IMGWMON_DATA_H_
 
-void conf_init(const gchar*);
-void conf_save(void);
+typedef struct
+{
+	gchar *memory;
+	gsize size;
+} memory_object;
 
-gint
-conf_read_integer (const gchar*, const gchar*, gint);
-
-gint conf_get_main_id_meteo (void);
-void conf_set_main_id_meteo (gint);
-
-gint conf_get_main_id_hydro (void);
-void conf_set_main_id_hydro (gint);
+void
+data_get (memory_object *mem, gshort target_object, gint target_id);
+void
+data_process (memory_object *mem, gshort data_index, gshort data_type, gchar *target_time)
+gsize
+data_write_callback (void *contents, gsize size, gsize nmemb, void *userp);
 
 #endif
