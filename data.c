@@ -67,22 +67,13 @@ data_get (memory_object *mem, gshort target_object, gint target_id)
 		fprintf(stderr, "Error, ID not specified!\n");
 		exit(EXIT_FAILURE);
 	}
-	
+		
 	/* Both meteo and hydro types use 9-digit id number */
 	if (!target_object)
-	{
-		url = g_malloc ((strlen(DATA_METEO_URL)+10)*sizeof(gchar));
-		url[0]='\0';
-		url = g_strconcat (url, DATA_METEO_URL, g_strdup_printf("%i", target_id), NULL);
-	}
+		url = g_strdup_printf("%s%i", DATA_METEO_URL, target_id);
 	else
-	{
-		url = g_malloc ((strlen(DATA_HYDRO_URL)+10)*sizeof(gchar));
-		url[0]='\0';
-		url = g_strconcat (url, DATA_HYDRO_URL, g_strdup_printf("%i", target_id), NULL);
-	}
-	
-	
+		url = g_strdup_printf("%s%i", DATA_HYDRO_URL, target_id);
+
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl_handle = curl_easy_init();
 

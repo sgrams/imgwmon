@@ -141,12 +141,16 @@ int main (gint argc, gchar **argv)
 				
 			case 'h':
 				info_print();
+				g_free (mem->memory);
+				g_free (mem);
 				return EXIT_SUCCESS;
 				
 			case 'd':
 				if (optind == argc)
 				{
 					printf("Date is required to be specified before data type!\n");
+					g_free (mem->memory);
+					g_free (mem);
 					return EXIT_FAILURE;
 				}
 				
@@ -271,6 +275,8 @@ int main (gint argc, gchar **argv)
 				
 			case '?':
 				fprintf(stderr, "Syntax: imgwmon [OPTIONS] ...\nTry `imgwmon --help` for more information.\n");
+				g_free (mem->memory);
+				g_free (mem);
 				return EXIT_FAILURE;
 				
 			default:
@@ -280,6 +286,8 @@ int main (gint argc, gchar **argv)
 	if (optind < 2)
 	{
 		fprintf(stderr, "Syntax: imgwmon [OPTIONS] ...\nTry `imgwmon --help` for more information.\n");
+		g_free (mem->memory);
+		g_free (mem);
 		return EXIT_FAILURE;
 	}
 	
@@ -287,6 +295,8 @@ int main (gint argc, gchar **argv)
 	{
 		fprintf(stderr, "Type of data parameter is mandatory!\n");
 		fprintf(stderr, "Syntax: imgwmon [OPTIONS] ...\nTry `imgwmon --help` for more information.\n");
+		g_free (mem->memory);
+		g_free (mem);
 		return EXIT_FAILURE;
 	}
 
