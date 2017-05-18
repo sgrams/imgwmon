@@ -33,7 +33,7 @@
 
 void	info_print (void);
 
-int main (gint argc, char **argv)
+int main (gint argc, gchar **argv)
 {
 	static	gint verbose_flag = 0;
 	static struct option long_options[] =
@@ -49,10 +49,10 @@ int main (gint argc, char **argv)
 	
 	static char *data_types[] =
 	{
-		"precip.current",
+		"precip.cur",
+		"precip.10min",
 		"precip.hourly",
 		"precip.daily",
-		"precip.10min",
 		
 		"temp.auto",
 		"temp.obs",
@@ -68,12 +68,20 @@ int main (gint argc, char **argv)
 		"wind.vel.obs",
 		"wind.vel.max",
 		
-		"water.state.current",
+		"wind.vel.tel.min",
+		"wind.vel.tel.max",
+		"wind.vel.obs.min",
+		"wind.vel.obs.max",
+		
+		"water.info",
+	
 		"water.state.auto",
 		"water.state.obs",
 		"water.discharge",
+	
 		"water.temp.auto",
 		"water.temp.obs",
+		
 		NULL
 	};
 	
@@ -84,11 +92,9 @@ int main (gint argc, char **argv)
 	gchar time_target[21];
 	
 	gshort data_type;
-	gshort data_type_target;
 	gshort data_index;
 	gshort data_index_target;
-
-	gint c, i, t;
+	gshort c, i, t;
 	
 	gint id;
 	gint id_target;
@@ -106,8 +112,10 @@ int main (gint argc, char **argv)
 	
 	data_index			= 0;
 	data_index_target	= 0;
+	data_type			= 0;
+	
 	option_index		= 0;
-
+	
 	real_time_struct = gmtime(&temp_time);
 	strftime(time_target, 21, "%Y-%m-%dT%H:00:00Z", real_time_struct);
 	
@@ -201,21 +209,25 @@ int main (gint argc, char **argv)
 				t = 1;
 
 				for (i=0; *(data_types+i) != NULL; i++)
+				{
 					if (strcmp(optarg, *(data_types+i)) == 0)
 						break;
+				}
 						
+				data_type = i; //set data_type
+
 				if (*(data_types+i) == NULL)
 				{
 					fprintf(stderr, "The specified type of data is invalid.\n");
 					return EXIT_FAILURE;
 				}
-
+				
 				else
 				{	
-					// check for id parameter if it's HYDRO type
+					// set data_index and id_target
 					if (!id)
 					{
-						for (i=15; (*(data_types+i) != NULL); i++)
+						for (i=19; (*(data_types+i) != NULL); i++)
 							if (strncmp(*(data_types+i), optarg, 4) == 0)
 								break;
 						if (*(data_types+i) == NULL)
@@ -234,12 +246,13 @@ int main (gint argc, char **argv)
 						id_target = id;
 				}
 				
-				/*if (verbose_flag)
+				if (verbose_flag)
 				{
-					fprintf(stderr, "data_index_target\t = %i\n", data_index_target);
-					fprintf(stderr, "data_type_target\t = %s\n", data_type_target);
-					fprintf(stderr, "id_target\t\t = %d\n", id_target);
-				}*/
+					fprintf(stderr, "data_index\t = %i\n", data_index);
+					fprintf(stderr, "data_type\t = %s\n", *(data_types+data_type));
+					fprintf(stderr, "id_target\t = %d\n", id_target);
+					fprintf(stderr, "time_target = %s\n", time_target);
+				}
 				
 				if (!mem->size || data_index != data_index_target)
 				{
@@ -253,7 +266,7 @@ int main (gint argc, char **argv)
 					data_index_target = data_index;
 					data_get(mem, data_index_target, id_target);
 				}
-				data_process(mem, data_index_target, data_type_target, time_target);
+				data_process(mem, data_index_target, data_type, time_target);
 				break;
 				
 			case '?':
@@ -278,7 +291,6 @@ int main (gint argc, char **argv)
 	}
 
 	conf_save();
-	g_free (data_type_target);
 	g_free (mem->memory);
 	g_free (mem);
 	return EXIT_SUCCESS;
@@ -292,35 +304,45 @@ void info_print (void)
       "\t-h\t\tPrint usage information\n"
 	  "\t-s\t\tEdit configuration\n"
       "\t-i <id>\t\tSet the station id number\n"
-      "\t-d <date>\tSet the date of fetching data (date format=\"YYYY-MM-DD HH:MM\" UTC),\n\t\t\tif empty - fetching latest\n"
-			"\t! The date is required to be set before data type !\n"
+      "\t-d <date>\tSet the date of fetching data (\"YYYY-MM-DD HH:MM\")\n"
       "\t-t <type>\tSet the type of fetching data\n\n"
+
 			"\tList of available METEO data types:\n"
-			"\tcurrentPrecip\t\t - precipitation at the moment\n"
-			"\thourlyPrecip\t\t - precipitation per hour\n"
-			"\tdailyPrecip\t\t - precipitation per day (date format=\"YYYY-MM-DD\")\n"
-			"\ttenMinutesPrecip\t - precipitation per 10 minutes (date format=\"HH:MM\"),\n\t\t\t\t data available up to the last hour\n"
-			"\ttemperatureAuto\t\t - temperature per hour\n"
-			"\ttemperatureObs\t\t - temperature per hour, measured by an observer\n"
-			"\tminTemperatureAuto\t - minimum temperature during the last 48 hours\n"
-			"\tmaxTemperatureAuto\t - maximum temperature during the last 48 hours\n"
-			"\tminTemperatureObs\t - minimum temperature during the last 48 hours, measured by an observer\n"
-			"\tmaxTemperatureObs\t - maximum temperature during the last 48 hours, measured by an observer\n"
-			"\twindDirectionTel\t - wind direction per 10 minutes\n"
-			"\twindDirectionObs\t - wind direction per 1 hour, measured by an observer\n"
-			"\twindVelocityTel\t\t - average wind speed per 10 minutes\n"
-			"\twindVelocityObs\t\t - average wind speed per 1 hour, measured by an observer\n"
-			"\twindMaxVelocity\t\t - maximum wind speed per 10 minutes\n"
+			"\tprecip.cur\t\tprecipitation at the moment\n"
+			"\tprecip.10min\t\tprecipitation per 10 minutes, last 48 hours\n"
+			"\tprecip.hourly\t\tprecipitation per day \n"
+			"\tprecip.daily\t\tprecipitation per day\n"
+			"\n"
+			"\ttemp.auto\t\ttemperature per hour\n"
+			"\ttemp.obs\t\ttemperature per hour, observer\n"
+			"\n"
+			"\ttemp.auto.min\t\tmin. temperature, last 48 hours\n"
+			"\ttemp.auto.max\t\tmax. temperature, last 48 hours\n"
+			"\ttemp.obs.min\t\tmin. temperature, last 48 hours, observer\n"
+			"\ttemp.obs.max\t\tmax. temperature, last 48 hours, observer\n"
+			"\n"
+			"\twind.dir.tel\t\twind direction per 10 minutes\n"
+			"\twind.dir.obs\t\twind direction per 1 hour, observer\n"
+			"\twind.vel.tel\t\tavg. wind speed per 10 minutes\n"
+			"\twind.vel.obs\t\tavg. wind speed per 1 hour, observer\n"
+			"\twind.vel.max\t\tmax. wind speed per 10 minutes\n"
+			"\n"
+			"\twind.vel.tel.min\tmin. wind speed per 10 minutes\n"
+			"\twind.vel.tel.max\tmax. wind speed per 10 minutes\n"
+			"\twind.vel.obs.min\tmin. wind speed per 1 hour, observer\n"
+			"\twind.vel.obs.max\tmax. wind speed per 1 hour, observer\n"
 			"\n"
 			"\tList of available HYDRO data types:\n"
-			"\tcurrentWaterState\t - state of water and trend at the moment\n"
-			"\twaterState\t\t - water states per hour\n"
-			"\twaterStateObserver\t - water states (frequency depends on the station),\n\t\t\t\t measured by an observer\n"
-			"\tdischarge\t\t - water discharge per hour\n"
-			"\twaterTemperatureAuto\t - water temperature per hour\n"
-			"\twaterTemperatureObs\t - water temperature (frequency depends on the station),\n\t\t\t\t measured by an observer\n"
+			"\twater.info\t\tstate of water station and trend at the moment\n"
+			"\twater.state.auto\twater states per hour\n"
+			"\twater.state.obs\t\twater states, observer\n"
+			"\twater.discharge\t\twater discharge per hour\n"
+			"\twater.temp.auto\t\twater temperature per hour\n"
+			"\twater.temp.obs\t\twater temperature, observer\n"
 			"\n"
 			"\tThe data is available up to the last 48 hours.\n"
+			"\tThe date is required to be set before data type\n"
+			"\tDates presented in UTC time.\n"
 			"\n"
 			"The source of data is Instytut Meteorologii i Gospodarki Wodnej - Panstwowy Instytut Badawczy.\n"
 			"Zrodlem pochodzenia danych jest Instytut Meteorologii i Gospodarki Wodnej - Panstwowy Instytut Badawczy\n"

@@ -28,7 +28,7 @@ typedef struct
 void
 data_get (memory_object *mem, gshort target_object, gint target_id);
 void
-data_process (memory_object *mem, gshort data_index, gshort data_type, gchar *target_time)
+data_process (memory_object *mem, gshort data_index, gshort data_type, gchar *target_time);
 gsize
 data_write_callback (void *contents, gsize size, gsize nmemb, void *userp);
 
