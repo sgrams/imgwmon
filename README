@@ -13,11 +13,13 @@ check out <http://www.gnu.org/>.
   Imgwmon has been built and tested under "Arch Linux" distro of GNU/Linux.
 
   1.1 DEPENDENCIES
-    - libyajl/1.0.12
-    - libcurl/7.52.1
+    - libyajl
+    - libcurl
+    - glib-2.0
 
   1.2 INSTALLING
-    1. Run "gcc imgwmon.c -o imgwmon -Wall -ansi -pedantic -std=gnu99 -lcurl -lyajl".
+    1. Run "cc main.c conf.c data.c `pkg-config --cflags --libs glib-2.0`
+			-o imgwmon -lcurl -lyajl -pedantic -std=gnu99 -Wall".
        If you have troubles with compilation, doublecheck the dependencies.
     2. Make sure "./imgwmon" works properely.
     3. Copy "imgwmon" to the appriopriate public directory.
@@ -27,45 +29,49 @@ check out <http://www.gnu.org/>.
   All the data is available up to the last 48 hours.
 
   2.1 USAGE
-    imgwmon <options>
-    -h  Prints usage information
-    -i  <id>   Set the station ID number
-        (defaults are specified in the header of imgwmon.c file)
-    -d  <date> Set the date (YYYY-MM-DD HH:MM) (all times in UTC)
-        if the type of data is set to dailyPrecip (YYYY-MM-DD)
-        if empty - fetching latest possible
-    ! The date is required to be set before data type !
-    -t  <type> Set the type of fetching data
+    Usage: imgwmon <options>
+    -h          Print usage information
+    -s          Edit configuration
+    -i <id>     Set the station id number
+    -d <date>   Set the date of fetching data ("YYYY-MM-DD HH:MM")
+    -t <type>   Set the type of fetching data
 
-  2.2 LIST OF AVAILABLE METEO TYPES
-    currentPrecip       precipitation at the moment
-    hourlyPrecip        precipitation per hour
-    dailyPrecip         precipitation per day (date format="YYYY-MM-DD")
-    tenMinutesPrecip    precipitation per 10 minutes (date format="HH:MM"),
-                        data available up to the last hour
-    temperatureAuto     temperature per hour
-    temperatureObs      temperature per hour, measured by an observer
-    minTemperatureAuto  minimum temperature during the last 48 hours
-    maxTemperatureAuto  maximum temperature during the last 48 hours
-    minTemperatureObs   minimum temperature during the last 48 hours,
-                        measured by an observer
-    maxTemperatureObs   maximum temperature during the last 48 hours,
-                        measured by an observer
-    windDirectionTel    wind direction per 10 minutes
-    windDirectionObs    wind direction per 1 hour, measured by an observer
-    windVelocityTel     average wind speed per 10 minutes
-    windVelocityObs     average wind speed per 1 hour, measured by an observer
-    windMaxVelocity     maximum wind speed per 10 minutes
+    List of available METEO data types:
+    precip.cur          precipitation at the moment
+    precip.10min        precipitation per 10 minutes, last 48 hours
+    precip.hourly       precipitation per day 
+    precip.daily        precipitation per day
 
-  2.3 LIST OF AVAILABLE HYDRO TYPES
-    currentWaterState     state of water and trend at the moment
-    waterState            water states per hour
-    waterStateObserver    water states (frequency depends on the station),
-                          measured by an observer
-    discharge             water discharge per hour
-    waterTemperatureAuto  water temperature per hour
-    waterTemperatureObs   water temperature (frequency depends on the station),
-                          measured by an observer
+    temp.auto           temperature per hour
+    temp.obs            temperature per hour, observer
+
+    temp.auto.min       min. temperature, last 48 hours
+    temp.auto.max       max. temperature, last 48 hours
+    temp.obs.min        min. temperature, last 48 hours, observer
+    temp.obs.max        max. temperature, last 48 hours, observer
+
+    wind.dir.tel        wind direction per 10 minutes
+    wind.dir.obs        wind direction per 1 hour, observer
+    wind.vel.tel        avg. wind speed per 10 minutes
+    wind.vel.obs        avg. wind speed per 1 hour, observer
+    wind.vel.max        max. wind speed per 10 minutes
+
+    wind.vel.tel.min    min. wind speed per 10 minutes
+    wind.vel.tel.max    max. wind speed per 10 minutes
+    wind.vel.obs.min    min. wind speed per 1 hour, observer
+    wind.vel.obs.max    max. wind speed per 1 hour, observer
+
+	List of available HYDRO data types:
+    water.info          state of water station and trend at the moment
+    water.state.auto    water states per hour
+    water.state.obs     water states, observer
+    water.discharge     water discharge per hour
+    water.temp.auto     water temperature per hour
+    water.temp.obs      water temperature, observer
+
+    The data is available up to the last 48 hours.
+    The date is required to be set before data type
+    Dates presented in UTC time.
 
 3. AVAILABLE STATIONS
   The lists of HYDRO and METEO stations are located in "stations" directory. IDs may be
