@@ -61,7 +61,7 @@ check out <http://www.gnu.org/>.
     wind.vel.obs.min    min. wind speed per 1 hour, observer
     wind.vel.obs.max    max. wind speed per 1 hour, observer
 
-	List of available HYDRO data types:
+    List of available HYDRO data types:
     water.info          state of water station and trend at the moment
     water.state.auto    water states per hour
     water.state.obs     water states, observer
