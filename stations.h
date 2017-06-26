@@ -1,5 +1,5 @@
 /* 
- *  imgwmon 0.1-git
+ *  imgwmon 0.2-git
  *  (C) 2016-2017 Stanisław J. Grams <sjg@fmdx.pl>
  * 
  *	stations.h
