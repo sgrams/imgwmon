@@ -56,7 +56,8 @@ conf_init (const gchar *custom_path)
     conf_read();
 }
 
-static void
+static
+void
 conf_read()
 {
     gboolean file_exists = TRUE;
@@ -125,6 +126,13 @@ conf_save ()
         fclose(fp);
     }
     g_free(configuration);
+    g_free(err);
+}
+void
+conf_destroy ()
+{
+  g_free(conf.path);
+  g_key_file_free(conf.keyfile);
 }
 
 gint

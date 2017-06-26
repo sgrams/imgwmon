@@ -120,19 +120,17 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
     "wind.vel.obs",     13
     "wind.vel.max",     14
     
-    "wind.vel.tel.min"  15
-    "wind.vel.tel.max"  16
-    "wind.vel.obs.min"  17
-    "wind.vel.obs.max"  18
+    "wind.vel.tel.max"  15
+    "wind.vel.obs.max"  16
 
-    "water.info",       19
+    "water.info",       17
   
-    "water.state.auto", 20
-    "water.state.obs",  21
-    "water.discharge",  22
+    "water.state.auto", 18
+    "water.state.obs",  19
+    "water.discharge",  20
 
-    "water.temp.auto",  23
-    "water.temp.obs",   24
+    "water.temp.auto",  21
+    "water.temp.obs",   22
 
   */
   
@@ -199,15 +197,15 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
     if (data_type == 14)
       arrays_data_type = yajl_tree_get (main_node, PATH_WIND_VEL_MAX, yajl_t_array);
       
-    if (data_type == 20)
+    if (data_type == 18)
       arrays_data_type = yajl_tree_get (main_node, PATH_WATER_STATE_AUTO, yajl_t_array);
-    if (data_type == 21)
+    if (data_type == 19)
       arrays_data_type = yajl_tree_get (main_node, PATH_WATER_STATE_OBS, yajl_t_array);
-    if (data_type == 22)
+    if (data_type == 20)
       arrays_data_type = yajl_tree_get (main_node, PATH_WATER_DISCHARGE, yajl_t_array);
-    if (data_type == 23)
+    if (data_type == 21)
       arrays_data_type = yajl_tree_get (main_node, PATH_WATER_TEMP_AUTO, yajl_t_array);
-    if (data_type == 24)
+    if (data_type == 22)
       arrays_data_type = yajl_tree_get (main_node, PATH_WATER_TEMP_OBS, yajl_t_array);
       
     if (!arrays_data_type)
@@ -254,7 +252,7 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
   }
 
   // data_type = {temp.auto.min, temp.auto.max, temp.obs.min, temp.obs.max
-  //        wind.vel.tel.min, wind.vel.tel.max, wind.vel.obs.min, wind.vel.obs.max}
+  //              wind.vel.tel.max, wind.vel.obs.max}
   if ((data_type >= 6 && data_type <= 9) || (data_type >= 15 && data_type <= 18))
   {
     // data_type = temp.auto.*
@@ -264,10 +262,10 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
     if (data_type == 8 || data_type == 9)
       arrays_data_type = yajl_tree_get (main_node, PATH_TEMP_OBS, yajl_t_array);
     // data_type = wind.vel.tel.*
-    if (data_type == 15 || data_type == 16)
+    if (data_type == 15)
       arrays_data_type = yajl_tree_get (main_node, PATH_WIND_VEL_TEL, yajl_t_array);
     // data_type = wind.vel.obs.*
-    if (data_type == 17 || data_type == 18)
+    if (data_type == 16)
       arrays_data_type = yajl_tree_get (main_node, PATH_WIND_VEL_OBS, yajl_t_array);
       
     if (!arrays_data_type)
@@ -291,9 +289,9 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
           keys_data_type    = arrays_data_type->u.array.values[i];
           values_data_type  = keys_data_type->u.object.values[1];
           
-          // if *.min
+          // if *.min (temp)
           if (search_result >= values_data_type->u.number.d &&
-            (data_type == 6 || data_type == 8 || data_type == 15 || data_type == 17))
+            (data_type == 6 || data_type == 8))
           {
             search_result   = values_data_type->u.number.d;
             values_data_type  = keys_data_type->u.object.values[0];
@@ -301,9 +299,9 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
             search_result_time     = g_strndup((gchar*)values_data_type->u.object.keys, 21);
           }
           
-          // if *.max
+          // if *.max (temp+wind)
           if (search_result <= values_data_type->u.number.d &&
-            (data_type == 7 || data_type == 9 || data_type == 16 || data_type == 18))
+            (data_type == 7 || data_type == 9 || data_type == 15 || data_type == 16))
           {
             search_result   = values_data_type->u.number.d;
             values_data_type  = keys_data_type->u.object.values[0];
@@ -313,7 +311,7 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
         }
       if (data_type >= 6 && data_type <= 9)
         fprintf(stdout, "%.1f °C, %s\n", search_result, search_result_time);
-      if (data_type >= 15 && data_type <= 19)
+      if (data_type == 15 || data_type == 16)
         fprintf(stdout, "%.1f m/s, %s\n", search_result, search_result_time);
 
       g_free(search_result_time);
@@ -322,7 +320,7 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
   }
   
   // data_type = water.info
-  if (data_type == 19)
+  if (data_type == 17)
   {
     object_data_type = yajl_tree_get(main_node, PATH_WATER_INFO_RIVER, yajl_t_string);
     if (object_data_type)

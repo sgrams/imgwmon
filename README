@@ -18,9 +18,7 @@ check out <http://www.gnu.org/>.
     - glib-2.0
 
   1.2 INSTALLING
-    1. Run "cc main.c conf.c data.c `pkg-config --cflags --libs glib-2.0`
-			-o imgwmon -lcurl -lyajl -pedantic -std=gnu99 -Wall".
-       If you have troubles with compilation, doublecheck the dependencies.
+    1. Run `make`
     2. Make sure "./imgwmon" works properely.
     3. Copy "imgwmon" to the appriopriate public directory.
 
@@ -56,9 +54,7 @@ check out <http://www.gnu.org/>.
     wind.vel.obs        avg. wind speed per 1 hour, observer
     wind.vel.max        max. wind speed per 10 minutes
 
-    wind.vel.tel.min    min. wind speed per 10 minutes
     wind.vel.tel.max    max. wind speed per 10 minutes
-    wind.vel.obs.min    min. wind speed per 1 hour, observer
     wind.vel.obs.max    max. wind speed per 1 hour, observer
 
     List of available HYDRO data types:
