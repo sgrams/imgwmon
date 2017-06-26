@@ -2,7 +2,7 @@
  *  imgwmon 0.1-git
  *  (C) 2016-2017 Stanisław J. Grams <sjg@fmdx.pl>
  * 
- *  data.h
+ *	stations.h
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -16,20 +16,10 @@
  *
  */
 
-#ifndef IMGWMON_DATA_H_
-#define IMGWMON_DATA_H_
+#ifndef IMGWMON_STATIONS_H_
+#define IMGWMON_STATIONS_H_
 
-typedef struct
-{
-  gchar *memory;
-  gsize size;
-} memory_object;
-
-void
-data_get (memory_object *mem, gshort target_object, gint target_id);
-void
-data_process (memory_object *mem, gshort data_type, gchar *target_time);
-gsize
-data_write_callback (void *contents, gsize size, gsize nmemb, void *userp);
+gint station_get_id       (gchar *name, gint data_type);
+gint station_validate_id  (gint id, gint data_type);
 
 #endif

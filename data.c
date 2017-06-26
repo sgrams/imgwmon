@@ -94,7 +94,7 @@ data_get (memory_object *mem, gshort target_object, gint target_id)
   g_free(url);
 }
 
-void data_process (memory_object *mem, gshort data_index, gshort data_type, gchar *target_time)
+void data_process (memory_object *mem, gshort data_type, gchar *target_time)
 {
   
   /*
@@ -172,7 +172,7 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
     
   if ((data_type >= 1 && data_type <= 5)    ||
        (data_type >= 10 && data_type <= 14) ||
-       (data_type >= 20 && data_type <= 24))
+       (data_type >= 18 && data_type <= 22))
   {
     if (data_type == 1)
       arrays_data_type = yajl_tree_get (main_node, PATH_PRECIP_10MIN, yajl_t_array);
@@ -221,7 +221,7 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
         keys_data_type = arrays_data_type -> u.array.values[i];
         
         // waterState has different fields than in METEO json
-        if (data_type == 20 || data_type == 21)
+        if (data_type == 18 || data_type == 19)
           values_data_type = keys_data_type -> u.object.values[1];
         else
           values_data_type = keys_data_type -> u.object.values[0];
@@ -236,15 +236,15 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
           // print corresponding measure
           if (data_type >= 0  && data_type <= 3)
             fprintf(stdout, "mm\n");
-          if (data_type == 4  || data_type == 5 || data_type == 23 || data_type == 24)
+          if (data_type == 4  || data_type == 5 || data_type == 21 || data_type == 22)
             fprintf(stdout, "°C\n");
           if (data_type == 10 || data_type == 11)
             fprintf(stdout, "°\n");
           if (data_type >= 12 && data_type <= 14)
             fprintf(stdout, "m/s\n");
-          if (data_type == 20 || data_type == 21)
+          if (data_type == 18 || data_type == 19)
             fprintf(stdout, "cm\n");
-          if (data_type == 22)
+          if (data_type == 20)
             fprintf(stdout, "m³/s\n");
         }
       }
@@ -253,7 +253,7 @@ void data_process (memory_object *mem, gshort data_index, gshort data_type, gcha
 
   // data_type = {temp.auto.min, temp.auto.max, temp.obs.min, temp.obs.max
   //              wind.vel.tel.max, wind.vel.obs.max}
-  if ((data_type >= 6 && data_type <= 9) || (data_type >= 15 && data_type <= 18))
+  if ((data_type >= 6 && data_type <= 9) || (data_type == 15 || data_type == 16))
   {
     // data_type = temp.auto.*
     if (data_type == 6 || data_type == 7)

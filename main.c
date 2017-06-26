@@ -267,7 +267,7 @@ int main (gint argc, gchar **argv)
                     data_index_target = data_index;
                     data_get(mem, data_index_target, id_target);
                 }
-                data_process(mem, data_index_target, data_type, time_target);
+                data_process(mem, data_type, time_target);
                 break;
                 
             case '?':

@@ -21,6 +21,7 @@
 
 void conf_init(const gchar*);
 void conf_save(void);
+void conf_destroy(void);
 
 gint
 conf_read_integer (const gchar*, const gchar*, gint);
